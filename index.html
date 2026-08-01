@@ -167,12 +167,48 @@
             margin-bottom: 12px;
         }
 
+        .workout-selector {
+            width: 100%;
+            margin-bottom: 16px;
+            background-color: #2a2a2a;
+            color: white;
+            border: 1px solid var(--border);
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
         .set-row {
             display: grid;
-            grid-template-columns: 30px 1fr 1fr 1fr 40px;
+            grid-template-columns: 40px 1fr 1fr 40px 40px;
             gap: 8px;
             align-items: center;
             margin-bottom: 8px;
+            transition: opacity 0.3s;
+        }
+        .set-row.done {
+            opacity: 0.4;
+        }
+        
+        .btn-check {
+            background-color: #333;
+            color: var(--text-dim);
+            border: 1px solid var(--border);
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 0 auto;
+        }
+        .btn-check.active {
+            background-color: var(--secondary);
+            color: white;
+            border-color: var(--secondary);
         }
 
         .set-label { font-size: 12px; color: var(--text-dim); text-align: center; }
@@ -198,8 +234,8 @@
         .footer-timer {
             position: fixed;
             bottom: 0;
-            left: 0;
-            right: 0;
+            width: 100%;
+            max-width: 500px;
             height: var(--footer-height);
             background-color: #1a1a1a;
             border-top: 1px solid var(--border);
@@ -271,85 +307,88 @@
 </head>
 <body>
     <div class="app-container">
-    <div class="status-bar">
-        <div id="current-workout-label">Treino A</div>
-        <div class="sync-status">
-            <span id="sync-dot" class="status-dot"></span>
-            <span id="sync-text">Offline</span>
-        </div>
-    </div>
-
-    <nav>
-        <div class="nav-tab active" onclick="showView('workout')">
-            <span>Treino</span>
-        </div>
-        <div class="nav-tab" onclick="showView('history')">
-            <span>Histórico</span>
-        </div>
-        <div class="nav-tab" onclick="showView('settings')">
-            <span>Config</span>
-        </div>
-    </nav>
-
-    <main id="main-content">
-        <!-- Workout View -->
-        <div id="view-workout" class="view active">
-            <div id="workout-container">
-                <!-- Exercícios serão injetados aqui -->
-            </div>
-            <button class="btn mt-16" onclick="finishWorkout()">
-                Finalizar Treino
-            </button>
-        </div>
-
-        <!-- History View -->
-        <div id="view-history" class="view">
-            <h2>Histórico</h2>
-            <div id="history-container">
-                <!-- Histórico será injetado aqui -->
+        <div class="status-bar">
+            <div id="current-workout-label" style="font-weight: bold; color: var(--primary);">Treino A</div>
+            <div class="sync-status">
+                <span id="sync-dot" class="status-dot"></span>
+                <span id="sync-text">Offline</span>
             </div>
         </div>
 
-        <!-- Settings View -->
-        <div id="view-settings" class="view">
-            <div class="settings-section">
-                <h3>Sincronização Nuvem</h3>
-                <div class="input-group mt-16">
-                    <label>GitHub Personal Access Token (PAT)</label>
-                    <input type="password" id="github-pat" placeholder="ghp_xxxxxxxxxxxx">
+        <nav>
+            <div class="nav-tab active" onclick="showView('workout')">
+                <span>Treino</span>
+            </div>
+            <div class="nav-tab" onclick="showView('history')">
+                <span>Histórico</span>
+            </div>
+            <div class="nav-tab" onclick="showView('settings')">
+                <span>Config</span>
+            </div>
+        </nav>
+
+        <main id="main-content">
+            <!-- Workout View -->
+            <div id="view-workout" class="view active">
+                <select id="workout-select" class="workout-selector" onchange="changeWorkout(this.value)">
+                    <!-- Options will be injected here -->
+                </select>
+                <div id="workout-container">
+                    <!-- Exercícios serão injetados aqui -->
                 </div>
-                <div class="input-group mt-16">
-                    <label>Gist ID</label>
-                    <input type="text" id="gist-id" placeholder="ID do seu Gist privado">
+                <button class="btn mt-16" onclick="finishWorkout()">
+                    Finalizar Treino
+                </button>
+            </div>
+
+            <!-- History View -->
+            <div id="view-history" class="view">
+                <h2>Histórico</h2>
+                <div id="history-container">
+                    <!-- Histórico será injetado aqui -->
                 </div>
-                <button class="btn btn-secondary mt-16" onclick="saveSettings()">Salvar Configurações</button>
-                <button class="btn btn-outline mt-16" onclick="manualSync()">Sincronizar Agora</button>
             </div>
 
-            <div class="settings-section">
-                <h3>Editar Ficha (JSON)</h3>
-                <textarea id="json-editor" class="json-editor mt-16"></textarea>
-                <button class="btn btn-secondary mt-16" onclick="saveJsonWorkout()">Atualizar Ficha</button>
-            </div>
-            
-            <button class="btn btn-danger mt-16" onclick="resetData()">Resetar Todos os Dados</button>
-        </div>
-    </main>
+            <!-- Settings View -->
+            <div id="view-settings" class="view">
+                <div class="settings-section">
+                    <h3>Sincronização Nuvem</h3>
+                    <div class="input-group mt-16">
+                        <label>GitHub Personal Access Token (PAT)</label>
+                        <input type="password" id="github-pat" placeholder="ghp_xxxxxxxxxxxx">
+                    </div>
+                    <div class="input-group mt-16">
+                        <label>Gist ID</label>
+                        <input type="text" id="gist-id" placeholder="ID do seu Gist privado">
+                    </div>
+                    <button class="btn btn-secondary mt-16" onclick="saveSettings()">Salvar Configurações</button>
+                    <button class="btn btn-outline mt-16" onclick="manualSync()">Sincronizar Agora</button>
+                </div>
 
-    <div class="footer-timer">
-        <div class="timer-display">
-            <span>Descanso</span>
-            <span id="timer-clock" class="timer-time">00:00</span>
-            <button class="btn btn-small btn-danger" onclick="cancelTimer()" style="width: auto; padding: 4px 8px;">Parar</button>
+                <div class="settings-section">
+                    <h3>Editar Ficha (JSON)</h3>
+                    <textarea id="json-editor" class="json-editor mt-16"></textarea>
+                    <button class="btn btn-secondary mt-16" onclick="saveJsonWorkout()">Atualizar Ficha</button>
+                </div>
+                
+                <button class="btn btn-danger mt-16" onclick="resetData()">Resetar Todos os Dados</button>
+            </div>
+        </main>
+
+        <div class="footer-timer">
+            <div class="timer-display">
+                <span>Descanso</span>
+                <span id="timer-clock" class="timer-time">00:00</span>
+                <button class="btn btn-small btn-danger" onclick="cancelTimer()" style="width: auto; padding: 4px 8px;">Parar</button>
+            </div>
+            <div class="timer-controls">
+                <button class="timer-btn" onclick="startTimer(45)">45s</button>
+                <button class="timer-btn" onclick="startTimer(60)">60s</button>
+                <button class="timer-btn" onclick="startTimer(90)">90s</button>
+                <button class="timer-btn" onclick="startTimer(120)">2min</button>
+                <button class="timer-btn" onclick="startTimer(180)">3min</button>
+            </div>
         </div>
-        <div class="timer-controls">
-            <button class="timer-btn" onclick="startTimer(45)">45s</button>
-            <button class="timer-btn" onclick="startTimer(60)">60s</button>
-            <button class="timer-btn" onclick="startTimer(90)">90s</button>
-            <button class="timer-btn" onclick="startTimer(120)">2min</button>
-            <button class="timer-btn" onclick="startTimer(180)">3min</button>
-        </div>
-    </div>
     </div>
 
     <script>
@@ -359,15 +398,15 @@
                 {
                     name: "Treino A",
                     exercises: [
-                        { name: "Supino Reto", sets: [{reps: 10, weight: 60}, {reps: 10, weight: 60}, {reps: 10, weight: 60}] },
-                        { name: "Desenvolvimento", sets: [{reps: 12, weight: 20}, {reps: 12, weight: 20}] }
+                        { name: "Supino Reto", sets: [{reps: 10, weight: 60, done: false}, {reps: 10, weight: 60, done: false}, {reps: 10, weight: 60, done: false}] },
+                        { name: "Desenvolvimento", sets: [{reps: 12, weight: 20, done: false}, {reps: 12, weight: 20, done: false}] }
                     ]
                 },
                 {
                     name: "Treino B",
                     exercises: [
-                        { name: "Agachamento", sets: [{reps: 10, weight: 80}, {reps: 10, weight: 80}, {reps: 10, weight: 80}] },
-                        { name: "Leg Press", sets: [{reps: 15, weight: 120}, {reps: 15, weight: 120}] }
+                        { name: "Agachamento", sets: [{reps: 10, weight: 80, done: false}, {reps: 10, weight: 80, done: false}, {reps: 10, weight: 80, done: false}] },
+                        { name: "Leg Press", sets: [{reps: 15, weight: 120, done: false}, {reps: 15, weight: 120, done: false}] }
                     ]
                 }
             ],
@@ -389,7 +428,6 @@
             updateTimerDisplay();
             timerInterval = setInterval(updateTimerDisplay, 100);
             
-            // Visual feedback on buttons
             document.querySelectorAll('.timer-btn').forEach(btn => {
                 btn.classList.toggle('active', btn.innerText.includes(seconds >= 60 ? seconds/60 + 'min' : seconds + 's'));
             });
@@ -452,6 +490,10 @@
             const saved = localStorage.getItem('manus_workout_data');
             if (saved) {
                 appState = JSON.parse(saved);
+                // Migração simples para novos campos se necessário
+                appState.workouts.forEach(w => w.exercises.forEach(e => e.sets.forEach(s => {
+                    if (s.done === undefined) s.done = false;
+                })));
             }
             renderWorkout();
             updateSyncStatus('online');
@@ -462,12 +504,24 @@
             syncToGist();
         }
 
+        function changeWorkout(index) {
+            appState.currentWorkoutIndex = parseInt(index);
+            renderWorkout();
+            localStorage.setItem('manus_workout_data', JSON.stringify(appState));
+        }
+
         function renderWorkout() {
             const workout = appState.workouts[appState.currentWorkoutIndex];
             document.getElementById('current-workout-label').innerText = workout.name;
             
+            // Atualiza o select
+            const select = document.getElementById('workout-select');
+            select.innerHTML = appState.workouts.map((w, i) => 
+                `<option value="${i}" ${i === appState.currentWorkoutIndex ? 'selected' : ''}>${w.name}</option>`
+            ).join('');
+
             const container = document.getElementById('workout-container');
-            container.innerHTML = `<h2>${workout.name}</h2>`;
+            container.innerHTML = "";
 
             workout.exercises.forEach((ex, exIdx) => {
                 const exDiv = document.createElement('div');
@@ -476,7 +530,7 @@
                 let setsHtml = '';
                 ex.sets.forEach((set, setIdx) => {
                     setsHtml += `
-                        <div class="set-row">
+                        <div class="set-row ${set.done ? 'done' : ''}">
                             <span class="set-label">${setIdx + 1}</span>
                             <div class="input-group">
                                 <label>Reps</label>
@@ -486,7 +540,9 @@
                                 <label>Kg</label>
                                 <input type="number" value="${set.weight}" onchange="updateSet(${exIdx}, ${setIdx}, 'weight', this.value)">
                             </div>
-                            <div></div>
+                            <div class="flex align-center">
+                                <button class="btn-check ${set.done ? 'active' : ''}" onclick="toggleSetDone(${exIdx}, ${setIdx})">✓</button>
+                            </div>
                             <button class="btn btn-small btn-danger" onclick="removeSet(${exIdx}, ${setIdx})">×</button>
                         </div>
                     `;
@@ -505,10 +561,19 @@
             });
         }
 
-        /**
-         * Atualiza um campo específico de uma série (reps ou peso).
-         * Nota: Salva apenas localmente para evitar excesso de requisições à API durante a digitação.
-         */
+        function toggleSetDone(exIdx, setIdx) {
+            const set = appState.workouts[appState.currentWorkoutIndex].exercises[exIdx].sets[setIdx];
+            set.done = !set.done;
+            renderWorkout();
+            localStorage.setItem('manus_workout_data', JSON.stringify(appState));
+            
+            // Iniciar timer automaticamente se marcado como feito
+            if (set.done) {
+                // Tenta pegar o tempo padrão ou 60s
+                startTimer(60);
+            }
+        }
+
         function updateSet(exIdx, setIdx, field, value) {
             appState.workouts[appState.currentWorkoutIndex].exercises[exIdx].sets[setIdx][field] = parseFloat(value);
             localStorage.setItem('manus_workout_data', JSON.stringify(appState));
@@ -516,8 +581,8 @@
 
         function addSet(exIdx) {
             const ex = appState.workouts[appState.currentWorkoutIndex].exercises[exIdx];
-            const lastSet = ex.sets[ex.sets.length - 1] || { reps: 10, weight: 0 };
-            ex.sets.push({ ...lastSet });
+            const lastSet = ex.sets[ex.sets.length - 1] || { reps: 10, weight: 0, done: false };
+            ex.sets.push({ ...lastSet, done: false });
             renderWorkout();
             localStorage.setItem('manus_workout_data', JSON.stringify(appState));
         }
@@ -537,6 +602,9 @@
             };
             
             appState.history.unshift(session);
+            
+            // Resetar marcadores de "feito" para a próxima vez que este treino for selecionado
+            workout.exercises.forEach(ex => ex.sets.forEach(s => s.done = false));
             
             // Avança para o próximo treino na rotação
             appState.currentWorkoutIndex = (appState.currentWorkoutIndex + 1) % appState.workouts.length;
@@ -590,7 +658,7 @@
             try {
                 const newWorkouts = JSON.parse(document.getElementById('json-editor').value);
                 appState.workouts = newWorkouts;
-                appState.currentWorkoutIndex = 0; // Reset index to be safe
+                appState.currentWorkoutIndex = 0; 
                 saveData();
                 alert('Ficha atualizada com sucesso!');
             } catch (e) {
@@ -606,10 +674,6 @@
         }
 
         // --- GITHUB GIST SYNC ---
-        /**
-         * Sincroniza o estado atual do app com o GitHub Gist.
-         * Utiliza o método PATCH para atualizar o arquivo 'workout_tracker_data.json'.
-         */
         async function syncToGist() {
             const { githubPat, gistId } = appState.config;
             if (!githubPat || !gistId) {
