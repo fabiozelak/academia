@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Manus Workout Tracker</title>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --text-color: #e0e0e0;
+            --text-dim: #b0b0b0;
+            --primary: #2196F3;
+            --secondary: #4CAF50;
+            --accent: #ff9800;
+            --danger: #f44336;
+            --border: #333;
+            --nav-height: 60px;
+            --footer-height: 80px;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #000;
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            line-height: 1.5;
+            display: flex;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 500px;
+            background-color: var(--bg-color);
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            position: relative;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        /* Status Bar */
+        .status-bar {
+            background-color: #000;
+            padding: 8px 16px;
+            font-size: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .sync-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #888;
+        }
+
+        .status-dot.online { background-color: var(--secondary); }
+        .status-dot.syncing { background-color: var(--accent); animation: pulse 1s infinite; }
+        .status-dot.offline { background-color: var(--danger); }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.4; }
+            100% { opacity: 1; }
+        }
+
+        /* Navigation */
+        nav {
+            display: flex;
+            background-color: var(--card-bg);
+            border-bottom: 1px solid var(--border);
+            height: var(--nav-height);
+        }
+
+        .nav-tab {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-dim);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+        }
+
+        .nav-tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        /* Main Content */
+        main {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            padding-bottom: calc(var(--footer-height) + 20px);
+        }
+
+        .view { display: none; }
+        .view.active { display: block; }
+
+        /* Typography & Components */
+        h1, h2, h3 { margin-top: 0; }
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+            border: 1px solid var(--border);
+        }
+
+        .btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 16px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            touch-action: manipulation;
+        }
+
+        .btn-secondary { background-color: #333; color: var(--text-color); }
+        .btn-outline { background-color: transparent; border: 1px solid var(--primary); color: var(--primary); }
+        .btn-small { padding: 6px 12px; font-size: 14px; width: auto; }
+        .btn-danger { background-color: var(--danger); }
+
+        /* Workout View Styles */
+        .exercise-item {
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 16px;
+            margin-bottom: 16px;
+        }
+        .exercise-item:last-child { border-bottom: none; margin-bottom: 0; }
+        
+        .exercise-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .set-row {
+            display: grid;
+            grid-template-columns: 30px 1fr 1fr 1fr 40px;
+            gap: 8px;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .set-label { font-size: 12px; color: var(--text-dim); text-align: center; }
+        
+        input[type="number"], input[type="text"], textarea {
+            background-color: #2a2a2a;
+            border: 1px solid var(--border);
+            color: white;
+            padding: 8px;
+            border-radius: 6px;
+            width: 100%;
+            font-size: 16px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .input-group label { font-size: 10px; color: var(--text-dim); text-transform: uppercase; }
+
+        /* Footer Timer */
+        .footer-timer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: var(--footer-height);
+            background-color: #1a1a1a;
+            border-top: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            padding: 8px 16px;
+            z-index: 100;
+        }
+
+        .timer-display {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .timer-time {
+            font-family: monospace;
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--secondary);
+        }
+
+        .timer-controls {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+        }
+
+        .timer-btn {
+            background-color: #333;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 6px 12px;
+            white-space: nowrap;
+            font-size: 13px;
+        }
+
+        .timer-btn.active { background-color: var(--secondary); }
+
+        /* History View */
+        .history-item {
+            border-left: 4px solid var(--primary);
+            padding-left: 12px;
+        }
+        .history-date { font-size: 12px; color: var(--text-dim); }
+        .history-workout-name { font-weight: bold; font-size: 18px; margin: 4px 0; }
+        .history-details { font-size: 14px; }
+
+        /* Settings View */
+        .settings-section { margin-bottom: 24px; }
+        .json-editor {
+            font-family: monospace;
+            height: 300px;
+            font-size: 12px;
+            resize: vertical;
+        }
+
+        /* Utilities */
+        .mt-16 { margin-top: 16px; }
+        .flex { display: flex; }
+        .gap-8 { gap: 8px; }
+        .justify-between { justify-content: space-between; }
+        .align-center { align-items: center; }
+
+    </style>
+</head>
+<body>
+    <div class="app-container">
+    <div class="status-bar">
+        <div id="current-workout-label">Treino A</div>
+        <div class="sync-status">
+            <span id="sync-dot" class="status-dot"></span>
+            <span id="sync-text">Offline</span>
+        </div>
+    </div>
+
+    <nav>
+        <div class="nav-tab active" onclick="showView('workout')">
+            <span>Treino</span>
+        </div>
+        <div class="nav-tab" onclick="showView('history')">
+            <span>Histórico</span>
+        </div>
+        <div class="nav-tab" onclick="showView('settings')">
+            <span>Config</span>
+        </div>
+    </nav>
+
+    <main id="main-content">
+        <!-- Workout View -->
+        <div id="view-workout" class="view active">
+            <div id="workout-container">
+                <!-- Exercícios serão injetados aqui -->
+            </div>
+            <button class="btn mt-16" onclick="finishWorkout()">
+                Finalizar Treino
+            </button>
+        </div>
+
+        <!-- History View -->
+        <div id="view-history" class="view">
+            <h2>Histórico</h2>
+            <div id="history-container">
+                <!-- Histórico será injetado aqui -->
+            </div>
+        </div>
+
+        <!-- Settings View -->
+        <div id="view-settings" class="view">
+            <div class="settings-section">
+                <h3>Sincronização Nuvem</h3>
+                <div class="input-group mt-16">
+                    <label>GitHub Personal Access Token (PAT)</label>
+                    <input type="password" id="github-pat" placeholder="ghp_xxxxxxxxxxxx">
+                </div>
+                <div class="input-group mt-16">
+                    <label>Gist ID</label>
+                    <input type="text" id="gist-id" placeholder="ID do seu Gist privado">
+                </div>
+                <button class="btn btn-secondary mt-16" onclick="saveSettings()">Salvar Configurações</button>
+                <button class="btn btn-outline mt-16" onclick="manualSync()">Sincronizar Agora</button>
+            </div>
+
+            <div class="settings-section">
+                <h3>Editar Ficha (JSON)</h3>
+                <textarea id="json-editor" class="json-editor mt-16"></textarea>
+                <button class="btn btn-secondary mt-16" onclick="saveJsonWorkout()">Atualizar Ficha</button>
+            </div>
+            
+            <button class="btn btn-danger mt-16" onclick="resetData()">Resetar Todos os Dados</button>
+        </div>
+    </main>
+
+    <div class="footer-timer">
+        <div class="timer-display">
+            <span>Descanso</span>
+            <span id="timer-clock" class="timer-time">00:00</span>
+            <button class="btn btn-small btn-danger" onclick="cancelTimer()" style="width: auto; padding: 4px 8px;">Parar</button>
+        </div>
+        <div class="timer-controls">
+            <button class="timer-btn" onclick="startTimer(45)">45s</button>
+            <button class="timer-btn" onclick="startTimer(60)">60s</button>
+            <button class="timer-btn" onclick="startTimer(90)">90s</button>
+            <button class="timer-btn" onclick="startTimer(120)">2min</button>
+            <button class="timer-btn" onclick="startTimer(180)">3min</button>
+        </div>
+    </div>
+    </div>
+
+    <script>
+        // --- DATA STRUCTURE ---
+        let appState = {
+            workouts: [
+                {
+                    name: "Treino A",
+                    exercises: [
+                        { name: "Supino Reto", sets: [{reps: 10, weight: 60}, {reps: 10, weight: 60}, {reps: 10, weight: 60}] },
+                        { name: "Desenvolvimento", sets: [{reps: 12, weight: 20}, {reps: 12, weight: 20}] }
+                    ]
+                },
+                {
+                    name: "Treino B",
+                    exercises: [
+                        { name: "Agachamento", sets: [{reps: 10, weight: 80}, {reps: 10, weight: 80}, {reps: 10, weight: 80}] },
+                        { name: "Leg Press", sets: [{reps: 15, weight: 120}, {reps: 15, weight: 120}] }
+                    ]
+                }
+            ],
+            currentWorkoutIndex: 0,
+            history: [],
+            config: {
+                githubPat: "",
+                gistId: ""
+            }
+        };
+
+        // --- TIMER LOGIC ---
+        let timerInterval = null;
+        let timerEndTime = null;
+
+        function startTimer(seconds) {
+            cancelTimer();
+            timerEndTime = Date.now() + (seconds * 1000);
+            updateTimerDisplay();
+            timerInterval = setInterval(updateTimerDisplay, 100);
+            
+            // Visual feedback on buttons
+            document.querySelectorAll('.timer-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.innerText.includes(seconds >= 60 ? seconds/60 + 'min' : seconds + 's'));
+            });
+        }
+
+        function cancelTimer() {
+            if (timerInterval) clearInterval(timerInterval);
+            timerInterval = null;
+            timerEndTime = null;
+            document.getElementById('timer-clock').innerText = "00:00";
+            document.querySelectorAll('.timer-btn').forEach(btn => btn.classList.remove('active'));
+        }
+
+        function updateTimerDisplay() {
+            if (!timerEndTime) return;
+            
+            const now = Date.now();
+            const remaining = Math.max(0, Math.floor((timerEndTime - now) / 1000));
+            
+            const mins = Math.floor(remaining / 60).toString().padStart(2, '0');
+            const secs = (remaining % 60).toString().padStart(2, '0');
+            document.getElementById('timer-clock').innerText = `${mins}:${secs}`;
+
+            if (remaining <= 0) {
+                const isFinished = timerEndTime !== null;
+                cancelTimer();
+                if (isFinished) {
+                    if ("vibrate" in navigator) {
+                        navigator.vibrate([400, 100, 400]);
+                    }
+                    try {
+                        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                        const oscillator = audioCtx.createOscillator();
+                        oscillator.type = 'sine';
+                        oscillator.frequency.setValueAtTime(880, audioCtx.currentTime);
+                        oscillator.connect(audioCtx.destination);
+                        oscillator.start();
+                        oscillator.stop(audioCtx.currentTime + 0.3);
+                    } catch(e) {}
+                }
+            }
+        }
+
+        // --- VIEW MANAGEMENT ---
+        function showView(viewId) {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.getElementById(`view-${viewId}`).classList.add('active');
+            
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            const activeTab = Array.from(document.querySelectorAll('.nav-tab')).find(t => t.innerText.toLowerCase().includes(viewId === 'workout' ? 'treino' : viewId === 'history' ? 'histórico' : 'config'));
+            if (activeTab) activeTab.classList.add('active');
+
+            if (viewId === 'workout') renderWorkout();
+            if (viewId === 'history') renderHistory();
+            if (viewId === 'settings') renderSettings();
+        }
+
+        // --- CORE LOGIC ---
+        function loadData() {
+            const saved = localStorage.getItem('manus_workout_data');
+            if (saved) {
+                appState = JSON.parse(saved);
+            }
+            renderWorkout();
+            updateSyncStatus('online');
+        }
+
+        function saveData() {
+            localStorage.setItem('manus_workout_data', JSON.stringify(appState));
+            syncToGist();
+        }
+
+        function renderWorkout() {
+            const workout = appState.workouts[appState.currentWorkoutIndex];
+            document.getElementById('current-workout-label').innerText = workout.name;
+            
+            const container = document.getElementById('workout-container');
+            container.innerHTML = `<h2>${workout.name}</h2>`;
+
+            workout.exercises.forEach((ex, exIdx) => {
+                const exDiv = document.createElement('div');
+                exDiv.className = 'card exercise-item';
+                
+                let setsHtml = '';
+                ex.sets.forEach((set, setIdx) => {
+                    setsHtml += `
+                        <div class="set-row">
+                            <span class="set-label">${setIdx + 1}</span>
+                            <div class="input-group">
+                                <label>Reps</label>
+                                <input type="number" value="${set.reps}" onchange="updateSet(${exIdx}, ${setIdx}, 'reps', this.value)">
+                            </div>
+                            <div class="input-group">
+                                <label>Kg</label>
+                                <input type="number" value="${set.weight}" onchange="updateSet(${exIdx}, ${setIdx}, 'weight', this.value)">
+                            </div>
+                            <div></div>
+                            <button class="btn btn-small btn-danger" onclick="removeSet(${exIdx}, ${setIdx})">×</button>
+                        </div>
+                    `;
+                });
+
+                exDiv.innerHTML = `
+                    <div class="exercise-header">
+                        <strong>${ex.name}</strong>
+                        <button class="btn btn-small btn-outline" onclick="addSet(${exIdx})">+ Série</button>
+                    </div>
+                    <div class="sets-container">
+                        ${setsHtml}
+                    </div>
+                `;
+                container.appendChild(exDiv);
+            });
+        }
+
+        /**
+         * Atualiza um campo específico de uma série (reps ou peso).
+         * Nota: Salva apenas localmente para evitar excesso de requisições à API durante a digitação.
+         */
+        function updateSet(exIdx, setIdx, field, value) {
+            appState.workouts[appState.currentWorkoutIndex].exercises[exIdx].sets[setIdx][field] = parseFloat(value);
+            localStorage.setItem('manus_workout_data', JSON.stringify(appState));
+        }
+
+        function addSet(exIdx) {
+            const ex = appState.workouts[appState.currentWorkoutIndex].exercises[exIdx];
+            const lastSet = ex.sets[ex.sets.length - 1] || { reps: 10, weight: 0 };
+            ex.sets.push({ ...lastSet });
+            renderWorkout();
+            localStorage.setItem('manus_workout_data', JSON.stringify(appState));
+        }
+
+        function removeSet(exIdx, setIdx) {
+            appState.workouts[appState.currentWorkoutIndex].exercises[exIdx].sets.splice(setIdx, 1);
+            renderWorkout();
+            localStorage.setItem('manus_workout_data', JSON.stringify(appState));
+        }
+
+        function finishWorkout() {
+            const workout = appState.workouts[appState.currentWorkoutIndex];
+            const session = {
+                date: new Date().toISOString(),
+                name: workout.name,
+                exercises: JSON.parse(JSON.stringify(workout.exercises))
+            };
+            
+            appState.history.unshift(session);
+            
+            // Avança para o próximo treino na rotação
+            appState.currentWorkoutIndex = (appState.currentWorkoutIndex + 1) % appState.workouts.length;
+            
+            saveData();
+            alert('Treino finalizado e salvo!');
+            showView('history');
+        }
+
+        function renderHistory() {
+            const container = document.getElementById('history-container');
+            if (appState.history.length === 0) {
+                container.innerHTML = '<p style="color: var(--text-dim)">Nenhum treino registrado ainda.</p>';
+                return;
+            }
+
+            container.innerHTML = '';
+            appState.history.forEach(session => {
+                const date = new Date(session.date).toLocaleString('pt-BR');
+                const card = document.createElement('div');
+                card.className = 'card history-item';
+                
+                let details = session.exercises.map(ex => {
+                    const setsInfo = ex.sets.map(s => `${s.reps}x${s.weight}kg`).join(', ');
+                    return `<div><strong>${ex.name}</strong>: ${setsInfo}</div>`;
+                }).join('');
+
+                card.innerHTML = `
+                    <div class="history-date">${date}</div>
+                    <div class="history-workout-name">${session.name}</div>
+                    <div class="history-details">${details}</div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function renderSettings() {
+            document.getElementById('github-pat').value = appState.config.githubPat;
+            document.getElementById('gist-id').value = appState.config.gistId;
+            document.getElementById('json-editor').value = JSON.stringify(appState.workouts, null, 2);
+        }
+
+        function saveSettings() {
+            appState.config.githubPat = document.getElementById('github-pat').value;
+            appState.config.gistId = document.getElementById('gist-id').value;
+            saveData();
+            alert('Configurações salvas!');
+        }
+
+        function saveJsonWorkout() {
+            try {
+                const newWorkouts = JSON.parse(document.getElementById('json-editor').value);
+                appState.workouts = newWorkouts;
+                appState.currentWorkoutIndex = 0; // Reset index to be safe
+                saveData();
+                alert('Ficha atualizada com sucesso!');
+            } catch (e) {
+                alert('Erro no JSON: ' + e.message);
+            }
+        }
+
+        function resetData() {
+            if (confirm('Tem certeza que deseja apagar TODOS os dados? Isso não pode ser desfeito.')) {
+                localStorage.removeItem('manus_workout_data');
+                location.reload();
+            }
+        }
+
+        // --- GITHUB GIST SYNC ---
+        /**
+         * Sincroniza o estado atual do app com o GitHub Gist.
+         * Utiliza o método PATCH para atualizar o arquivo 'workout_tracker_data.json'.
+         */
+        async function syncToGist() {
+            const { githubPat, gistId } = appState.config;
+            if (!githubPat || !gistId) {
+                updateSyncStatus('offline');
+                return;
+            }
+
+            updateSyncStatus('syncing');
+
+            try {
+                const response = await fetch(`https://api.github.com/gists/${gistId}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Authorization': `token ${githubPat}`,
+                        'Accept': 'application/vnd.github.v3+json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        description: 'Manus Workout Tracker Backup',
+                        files: {
+                            'workout_tracker_data.json': {
+                                content: JSON.stringify(appState, null, 2)
+                            }
+                        }
+                    })
+                });
+
+                if (response.ok) {
+                    updateSyncStatus('online');
+                } else {
+                    const errorData = await response.json();
+                    console.error('GitHub API Error:', errorData);
+                    throw new Error(errorData.message || 'Falha na sincronização');
+                }
+            } catch (error) {
+                console.error('Erro na sincronização:', error);
+                updateSyncStatus('offline');
+            }
+        }
+
+        async function manualSync() {
+            const { githubPat, gistId } = appState.config;
+            if (!githubPat || !gistId) {
+                alert('Configure o PAT e o Gist ID primeiro.');
+                return;
+            }
+
+            updateSyncStatus('syncing');
+            try {
+                const response = await fetch(`https://api.github.com/gists/${gistId}`, {
+                    headers: { 'Authorization': `token ${githubPat}` }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const content = data.files['workout_tracker_data.json'].content;
+                    appState = JSON.parse(content);
+                    localStorage.setItem('manus_workout_data', JSON.stringify(appState));
+                    renderWorkout();
+                    updateSyncStatus('online');
+                    alert('Dados baixados da nuvem com sucesso!');
+                } else {
+                    alert('Erro ao buscar Gist. Verifique o ID e o Token.');
+                    updateSyncStatus('offline');
+                }
+            } catch (error) {
+                alert('Erro de conexão.');
+                updateSyncStatus('offline');
+            }
+        }
+
+        function updateSyncStatus(status) {
+            const dot = document.getElementById('sync-dot');
+            const text = document.getElementById('sync-text');
+            
+            dot.className = 'status-dot ' + status;
+            const labels = {
+                'online': 'Sincronizado',
+                'syncing': 'Sincronizando...',
+                'offline': 'Offline'
+            };
+            text.innerText = labels[status] || status;
+        }
+
+        // --- INIT ---
+        window.onload = loadData;
+    </script>
+</body>
+</html>
