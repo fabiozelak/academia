@@ -424,14 +424,11 @@
                 <div class="settings-section">
                     <h3>Sincronização Nuvem</h3>
                     <div style="background: rgba(244, 67, 54, 0.1); border: 1px solid var(--danger); padding: 10px; border-radius: 8px; font-size: 12px; margin-bottom: 16px;">
-                        <strong>Atenção:</strong> NUNCA cole seu token diretamente no código fonte (index.html) antes de subir para o GitHub. O GitHub irá desativá-lo automaticamente. 
-                        <br><br>
-                        <strong>Como fazer:</strong> Suba o arquivo limpo. Abra o site já hospedado no seu navegador e SÓ ENTÃO insira o token nos campos abaixo. Ele ficará salvo apenas no seu navegador.
+                        <strong>SEGURANÇA:</strong> O Token e o ID do Gist ficam salvos apenas no seu navegador. Eles <strong>NUNCA</strong> são enviados para dentro do arquivo do Gist para evitar que o GitHub os desative.
                     </div>
                     <div class="input-group mt-16">
                         <label>GitHub PAT (Token)</label>
-                        <input type="password" id="github-pat" placeholder="
-                        ">
+                        <input type="password" id="github-pat" placeholder="ghp_xxxxxxxxxxxx">
                     </div>
                     <div class="input-group mt-16">
                         <label>Gist ID</label>
@@ -468,30 +465,29 @@
     </div>
 
     <script>
-        // --- DATA STRUCTURE ---
-        let appState = {
+        // --- DATA STRUCTURES ---
+        
+        // Dados que SERÃO sincronizados com a nuvem
+        let appData = {
             workouts: [
                 {
                     name: "Treino A",
                     exercises: [
-                        { name: "Supino Reto", sets: [{reps: 10, weight: 60, done: false}, {reps: 10, weight: 60, done: false}] },
-                        { name: "Desenvolvimento", sets: [{reps: 12, weight: 20, done: false}] }
-                    ]
-                },
-                {
-                    name: "Treino B",
-                    exercises: [
-                        { name: "Agachamento", sets: [{reps: 10, weight: 80, done: false}] }
+                        { name: "Supino Reto", sets: [{reps: 10, weight: 60, done: false}] }
                     ]
                 }
             ],
             currentWorkoutIndex: 0,
             history: [],
-            config: {
-                githubPat: "",
-                gistId: "",
+            preferences: {
                 autoTimer: true
             }
+        };
+
+        // Configurações que NUNCA serão enviadas para o Gist
+        let appConfig = {
+            githubPat: "",
+            gistId: ""
         };
 
         // --- TIMER LOGIC ---
@@ -559,42 +555,47 @@
 
         // --- CORE LOGIC ---
         function loadData() {
-            const saved = localStorage.getItem('manus_workout_data');
-            if (saved) {
-                appState = JSON.parse(saved);
-                if (appState.config.autoTimer === undefined) appState.config.autoTimer = true;
-            }
+            const savedData = localStorage.getItem('manus_workout_data');
+            const savedConfig = localStorage.getItem('manus_workout_config');
+            
+            if (savedData) appData = JSON.parse(savedData);
+            if (savedConfig) appConfig = JSON.parse(savedConfig);
+            
+            // Garantir que preferências existam
+            if (!appData.preferences) appData.preferences = { autoTimer: true };
+
             renderWorkout();
             updateSyncStatus('online');
         }
 
-        function saveData() {
-            localStorage.setItem('manus_workout_data', JSON.stringify(appState));
+        function saveAll() {
+            localStorage.setItem('manus_workout_data', JSON.stringify(appData));
+            localStorage.setItem('manus_workout_config', JSON.stringify(appConfig));
             syncToGist();
         }
 
         function changeWorkout(index) {
-            appState.currentWorkoutIndex = parseInt(index);
+            appData.currentWorkoutIndex = parseInt(index);
             renderWorkout();
-            localStorage.setItem('manus_workout_data', JSON.stringify(appState));
+            localStorage.setItem('manus_workout_data', JSON.stringify(appData));
         }
 
         function renderWorkout() {
-            const workout = appState.workouts[appState.currentWorkoutIndex];
+            const workout = appData.workouts[appData.currentWorkoutIndex];
             if (!workout) {
-                if (appState.workouts.length > 0) {
-                    appState.currentWorkoutIndex = 0;
+                if (appData.workouts.length > 0) {
+                    appData.currentWorkoutIndex = 0;
                     renderWorkout();
                 } else {
-                    document.getElementById('workout-container').innerHTML = "<p>Nenhum treino criado. Vá em Configurações.</p>";
+                    document.getElementById('workout-container').innerHTML = "<p>Crie um treino nas Configurações.</p>";
                 }
                 return;
             }
 
             document.getElementById('current-workout-label').innerText = workout.name;
             const select = document.getElementById('workout-select');
-            select.innerHTML = appState.workouts.map((w, i) => 
-                `<option value="${i}" ${i === appState.currentWorkoutIndex ? 'selected' : ''}>${w.name}</option>`
+            select.innerHTML = appData.workouts.map((w, i) => 
+                `<option value="${i}" ${i === appData.currentWorkoutIndex ? 'selected' : ''}>${w.name}</option>`
             ).join('');
 
             const container = document.getElementById('workout-container');
@@ -617,7 +618,7 @@
                 });
                 exDiv.innerHTML = `
                     <div class="exercise-header">
-                        <input type="text" value="${ex.name}" onchange="renameExercise(${exIdx}, this.value)" style="background:transparent; border:none; font-weight:bold; padding:0; width:auto;">
+                        <input type="text" value="${ex.name}" onchange="renameExercise(${exIdx}, this.value)" style="background:transparent; border:none; font-weight:bold; color:white; padding:0; width:auto;">
                         <button class="btn btn-small btn-outline" onclick="addSet(${exIdx})">+ Série</button>
                     </div>
                     <div class="sets-container">${setsHtml}</div>
@@ -632,70 +633,70 @@
             addExBtn.onclick = () => {
                 workout.exercises.push({ name: "Novo Exercício", sets: [{reps: 10, weight: 0, done: false}] });
                 renderWorkout();
-                saveData();
+                saveAll();
             };
             container.appendChild(addExBtn);
         }
 
         function toggleSetDone(exIdx, setIdx) {
-            const set = appState.workouts[appState.currentWorkoutIndex].exercises[exIdx].sets[setIdx];
+            const set = appData.workouts[appData.currentWorkoutIndex].exercises[exIdx].sets[setIdx];
             set.done = !set.done;
             renderWorkout();
-            localStorage.setItem('manus_workout_data', JSON.stringify(appState));
-            if (set.done && appState.config.autoTimer) startTimer(60);
+            localStorage.setItem('manus_workout_data', JSON.stringify(appData));
+            if (set.done && appData.preferences.autoTimer) startTimer(60);
         }
 
         function updateSet(exIdx, setIdx, field, value) {
-            appState.workouts[appState.currentWorkoutIndex].exercises[exIdx].sets[setIdx][field] = parseFloat(value);
-            localStorage.setItem('manus_workout_data', JSON.stringify(appState));
+            appData.workouts[appData.currentWorkoutIndex].exercises[exIdx].sets[setIdx][field] = parseFloat(value);
+            localStorage.setItem('manus_workout_data', JSON.stringify(appData));
         }
 
         function addSet(exIdx) {
-            const ex = appState.workouts[appState.currentWorkoutIndex].exercises[exIdx];
+            const ex = appData.workouts[appData.currentWorkoutIndex].exercises[exIdx];
             const lastSet = ex.sets[ex.sets.length - 1] || { reps: 10, weight: 0, done: false };
             ex.sets.push({ ...lastSet, done: false });
             renderWorkout();
-            localStorage.setItem('manus_workout_data', JSON.stringify(appState));
+            localStorage.setItem('manus_workout_data', JSON.stringify(appData));
         }
 
         function removeSet(exIdx, setIdx) {
-            appState.workouts[appState.currentWorkoutIndex].exercises[exIdx].sets.splice(setIdx, 1);
+            appData.workouts[appData.currentWorkoutIndex].exercises[exIdx].sets.splice(setIdx, 1);
             renderWorkout();
-            localStorage.setItem('manus_workout_data', JSON.stringify(appState));
+            localStorage.setItem('manus_workout_data', JSON.stringify(appData));
         }
 
         function renameExercise(exIdx, name) {
-            appState.workouts[appState.currentWorkoutIndex].exercises[exIdx].name = name;
-            saveData();
+            appData.workouts[appData.currentWorkoutIndex].exercises[exIdx].name = name;
+            saveAll();
         }
 
         function removeExercise(exIdx) {
             if(confirm("Remover este exercício?")) {
-                appState.workouts[appState.currentWorkoutIndex].exercises.splice(exIdx, 1);
+                appData.workouts[appData.currentWorkoutIndex].exercises.splice(exIdx, 1);
                 renderWorkout();
-                saveData();
+                saveAll();
             }
         }
 
         function finishWorkout() {
-            const workout = appState.workouts[appState.currentWorkoutIndex];
+            const workout = appData.workouts[appData.currentWorkoutIndex];
             const session = { date: new Date().toISOString(), name: workout.name, exercises: JSON.parse(JSON.stringify(workout.exercises)) };
-            appState.history.unshift(session);
+            appData.history.unshift(session);
             workout.exercises.forEach(ex => ex.sets.forEach(s => s.done = false));
-            appState.currentWorkoutIndex = (appState.currentWorkoutIndex + 1) % appState.workouts.length;
-            saveData();
+            appData.currentWorkoutIndex = (appData.currentWorkoutIndex + 1) % appData.workouts.length;
+            saveAll();
             alert('Treino finalizado!');
             showView('history');
         }
 
         function renderHistory() {
             const container = document.getElementById('history-container');
-            if (appState.history.length === 0) {
+            if (appData.history.length === 0) {
                 container.innerHTML = '<p style="color: var(--text-dim)">Nenhum histórico.</p>';
                 return;
             }
             container.innerHTML = '';
-            appState.history.forEach(session => {
+            appData.history.forEach(session => {
                 const date = new Date(session.date).toLocaleString('pt-BR');
                 const card = document.createElement('div');
                 card.className = 'card history-item';
@@ -709,13 +710,13 @@
         }
 
         function renderSettings() {
-            document.getElementById('config-autotimer').checked = appState.config.autoTimer;
-            document.getElementById('github-pat').value = appState.config.githubPat;
-            document.getElementById('gist-id').value = appState.config.gistId;
-            document.getElementById('json-editor').value = JSON.stringify(appState.workouts, null, 2);
+            document.getElementById('config-autotimer').checked = appData.preferences.autoTimer;
+            document.getElementById('github-pat').value = appConfig.githubPat;
+            document.getElementById('gist-id').value = appConfig.gistId;
+            document.getElementById('json-editor').value = JSON.stringify(appData.workouts, null, 2);
             
             const mgmtContainer = document.getElementById('workout-mgmt-container');
-            mgmtContainer.innerHTML = appState.workouts.map((w, i) => `
+            mgmtContainer.innerHTML = appData.workouts.map((w, i) => `
                 <div class="workout-mgmt-item">
                     <input type="text" value="${w.name}" onchange="renameWorkout(${i}, this.value)" style="width:60%; background:transparent; border:none; color:white;">
                     <button class="btn btn-small btn-danger" onclick="deleteWorkout(${i})">Excluir</button>
@@ -724,82 +725,112 @@
         }
 
         function updateAutoTimerPref(val) {
-            appState.config.autoTimer = val;
-            saveData();
+            appData.preferences.autoTimer = val;
+            saveAll();
         }
 
         function addNewWorkout() {
             const name = prompt("Nome do novo treino:", "Treino C");
             if (name) {
-                appState.workouts.push({ name: name, exercises: [] });
+                appData.workouts.push({ name: name, exercises: [] });
                 renderSettings();
-                saveData();
+                saveAll();
             }
         }
 
         function renameWorkout(index, name) {
-            appState.workouts[index].name = name;
-            saveData();
+            appData.workouts[index].name = name;
+            saveAll();
         }
 
         function deleteWorkout(index) {
-            if (confirm(`Excluir o treino "${appState.workouts[index].name}"?`)) {
-                appState.workouts.splice(index, 1);
-                if (appState.currentWorkoutIndex >= appState.workouts.length) appState.currentWorkoutIndex = 0;
+            if (confirm(`Excluir o treino "${appData.workouts[index].name}"?`)) {
+                appData.workouts.splice(index, 1);
+                if (appData.currentWorkoutIndex >= appData.workouts.length) appData.currentWorkoutIndex = 0;
                 renderSettings();
-                saveData();
+                saveAll();
             }
         }
 
         function saveSettings() {
-            appState.config.githubPat = document.getElementById('github-pat').value;
-            appState.config.gistId = document.getElementById('gist-id').value;
-            saveData();
-            alert('Salvo!');
+            appConfig.githubPat = document.getElementById('github-pat').value;
+            appConfig.gistId = document.getElementById('gist-id').value;
+            saveAll();
+            alert('Configurações de sincronização salvas localmente!');
         }
 
         function saveJsonWorkout() {
             try {
-                appState.workouts = JSON.parse(document.getElementById('json-editor').value);
-                saveData();
+                appData.workouts = JSON.parse(document.getElementById('json-editor').value);
+                saveAll();
                 alert('Ficha atualizada!');
             } catch (e) { alert('Erro no JSON: ' + e.message); }
         }
 
         function resetData() {
-            if (confirm('Apagar TUDO?')) { localStorage.removeItem('manus_workout_data'); location.reload(); }
+            if (confirm('Apagar TUDO?')) { 
+                localStorage.removeItem('manus_workout_data'); 
+                localStorage.removeItem('manus_workout_config'); 
+                location.reload(); 
+            }
         }
 
         async function syncToGist() {
-            const { githubPat, gistId } = appState.config;
+            const { githubPat, gistId } = appConfig;
             if (!githubPat || !gistId) { updateSyncStatus('offline'); return; }
+            
             updateSyncStatus('syncing');
             try {
                 const response = await fetch(`https://api.github.com/gists/${gistId}`, {
                     method: 'PATCH',
-                    headers: { 'Authorization': `token ${githubPat}`, 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ files: { 'workout_tracker_data.json': { content: JSON.stringify(appState, null, 2) } } })
+                    headers: { 
+                        'Authorization': `token ${githubPat}`, 
+                        'Accept': 'application/vnd.github.v3+json', 
+                        'Content-Type': 'application/json' 
+                    },
+                    // ENVIAMOS APENAS appData, NUNCA appConfig (que contém o token)
+                    body: JSON.stringify({ 
+                        files: { 
+                            'workout_tracker_data.json': { 
+                                content: JSON.stringify(appData, null, 2) 
+                            } 
+                        } 
+                    })
                 });
                 if (response.ok) updateSyncStatus('online');
                 else throw new Error('API Error');
-            } catch (error) { updateSyncStatus('offline'); }
+            } catch (error) { 
+                console.error(error);
+                updateSyncStatus('offline'); 
+            }
         }
 
         async function manualSync() {
-            const { githubPat, gistId } = appState.config;
-            if (!githubPat || !gistId) return;
+            const { githubPat, gistId } = appConfig;
+            if (!githubPat || !gistId) {
+                alert("Configure o Token e o ID primeiro.");
+                return;
+            }
             updateSyncStatus('syncing');
             try {
-                const response = await fetch(`https://api.github.com/gists/${gistId}`, { headers: { 'Authorization': `token ${githubPat}` } });
+                const response = await fetch(`https://api.github.com/gists/${gistId}`, { 
+                    headers: { 'Authorization': `token ${githubPat}` } 
+                });
                 if (response.ok) {
                     const data = await response.json();
-                    appState = JSON.parse(data.files['workout_tracker_data.json'].content);
-                    localStorage.setItem('manus_workout_data', JSON.stringify(appState));
+                    appData = JSON.parse(data.files['workout_tracker_data.json'].content);
+                    localStorage.setItem('manus_workout_data', JSON.stringify(appData));
                     renderWorkout();
                     updateSyncStatus('online');
-                    alert('Sincronizado!');
+                    alert('Dados da nuvem baixados com sucesso!');
+                } else {
+                    alert("Erro ao baixar dados. Verifique o Token e o ID.");
+                    updateSyncStatus('offline');
                 }
-            } catch (error) { updateSyncStatus('offline'); }
+            } catch (error) { 
+                updateSyncStatus('offline'); 
+                alert("Erro de conexão.");
+            }
         }
 
         function updateSyncStatus(status) {
