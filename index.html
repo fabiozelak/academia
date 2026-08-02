@@ -153,7 +153,7 @@
         
         input[type="number"], input[type="text"], textarea {
             background-color: var(--bg-input); border: 1px solid var(--border);
-            color: var(--text-main); padding: 8px; border-radius: 6px; width: 100%; font-size: 16px;
+            color: var(--text-main); padding: 8px; border-radius: 6px; width: 80%; font-size: 16px;
         }
 
         .btn-check {
@@ -215,6 +215,9 @@
         input:checked + .slider { background-color: var(--primary); }
         input:checked + .slider:before { transform: translateX(20px); }
 
+        #json-editor {width: 460px;height: 327px;}
+        #workout-container{padding-bottom: 15px;}
+        .btn-espacamento-inferior{margin-bottom: 10px;}
     </style>
 </head>
 <body>
@@ -282,14 +285,14 @@
                         <label>Gist ID</label>
                         <input type="text" id="gist-id" placeholder="ID do Gist">
                     </div>
-                    <button class="btn btn-secondary mt-8" onclick="saveSettings()">Salvar Configs</button>
+                    <button class="btn btn-secondary mt-8 btn-espacamento-inferior" onclick="saveSettings()">Salvar Configs</button>
                     <button class="btn btn-outline mt-8" onclick="manualSync()">Sincronizar Agora</button>
                 </div>
 
                 <div class="settings-section">
                     <h3>JSON</h3>
-                    <textarea id="json-editor" class="mt-8"></textarea>
-                    <button class="btn btn-secondary mt-8" onclick="saveJsonWorkout()">Atualizar via JSON</button>
+                    <textarea id="json-editor" class="mt-8 btn-espacamento-inferior"></textarea>
+                    <button class="btn btn-secondary mt-8 btn-espacamento-inferior" onclick="saveJsonWorkout()">Atualizar via JSON</button>
                 </div>
                 
                 <button class="btn btn-danger mt-16" onclick="resetData()">Resetar Tudo</button>
