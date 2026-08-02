@@ -423,8 +423,13 @@
 
                 <div class="settings-section">
                     <h3>Sincronização Nuvem</h3>
+                    <div style="background: rgba(244, 67, 54, 0.1); border: 1px solid var(--danger); padding: 10px; border-radius: 8px; font-size: 12px; margin-bottom: 16px;">
+                        <strong>Atenção:</strong> NUNCA cole seu token diretamente no código fonte (index.html) antes de subir para o GitHub. O GitHub irá desativá-lo automaticamente. 
+                        <br><br>
+                        <strong>Como fazer:</strong> Suba o arquivo limpo. Abra o site já hospedado no seu navegador e SÓ ENTÃO insira o token nos campos abaixo. Ele ficará salvo apenas no seu navegador.
+                    </div>
                     <div class="input-group mt-16">
-                        <label>GitHub PAT</label>
+                        <label>GitHub PAT (Token)</label>
                         <input type="password" id="github-pat" placeholder="ghp_xxxxxxxxxxxx">
                     </div>
                     <div class="input-group mt-16">
