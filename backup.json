@@ -1,0 +1,692 @@
+[
+  {
+    "name": "TREINO 1 — PEITO E TRÍCEPS",
+    "exercises": [
+      {
+        "name": "Tríceps Francês",
+        "sets": [
+          {
+            "reps": 12,
+            "weight": 24,
+            "done": false
+          },
+          {
+            "reps": 12,
+            "weight": 24,
+            "done": false
+          },
+          {
+            "reps": 12,
+            "weight": 24,
+            "done": false
+          }
+        ]
+      },
+      {
+        "name": "Tríceps Testa",
+        "sets": [
+          {
+            "reps": 12,
+            "weight": 25,
+            "done": false
+          },
+          {
+            "reps": 12,
+            "weight": 25,
+            "done": false
+          },
+          {
+            "reps": 12,
+            "weight": 25,
+            "done": false
+          }
+        ]
+      },
+      {
+        "name": "Tríceps Corda",
+        "sets": [
+          {
+            "reps": 12,
+            "weight": 30,
+            "done": false
+          },
+          {
+            "reps": 12,
+            "weight": 30,
+            "done": false
+          },
+          {
+            "reps": 12,
+            "weight": 30,
+            "done": false
+          }
+        ]
+      },
+      {
+        "name": "Supino Declinado",
+        "sets": [
+          {
+            "reps": 12,
+            "weight": 25,
+            "done": false
+          },
+          {
+            "reps": 12,
+            "weight": 25,
+            "done": false
+          },
+          {
+            "reps": 12,
+            "weight": 25,
+            "done": false
+          }
+        ]
+      },
+      {
+        "name": "Fly",
+        "sets": [
+          {
+            "reps": 12,
+            "weight": 40,
+            "done": false
+          },
+          {
+            "reps": 12,
+            "weight": 40,
+            "done": false
+          },
+          {
+            "reps": 12,
+            "weight": 40,
+            "done": false
+          }
+        ]
+      },
+      {
+        "name": "Supino Inclinado",
+        "sets": [
+          {
+            "reps": 12,
+            "weight": 18,
+            "done": false
+          },
+          {
+            "reps": 12,
+            "weight": 18,
+            "done": false
+          },
+          {
+            "reps": 12,
+            "weight": 18,
+            "done": false
+          }
+        ]
+      },
+      {
+        "name": "Supino",
+        "sets": [
+          {
+            "reps": 15,
+            "weight": 15,
+            "done": false
+          },
+          {
+            "reps": 15,
+            "weight": 15,
+            "done": false
+          },
+          {
+            "reps": 12,
+            "weight": 23,
+            "done": false
+          },
+          {
+            "reps": 12,
+            "weight": 23,
+            "done": false
+          },
+          {
+            "reps": 12,
+            "weight": 23,
+            "done": false
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "TREINO 2 — COSTAS E BÍCEPS",
+    "exercises": [
+      {
+        "name": "Rosca Scott",
+        "sets": [
+          {
+            "reps": 12,
+            "weight": 0,
+            "done": false
+          },
+          {
+            "reps": 12,
+            "weight": 0,
+            "done": false
+          },
+          {
+            "reps": 12,
+            "weight": 0,
+            "done": false
+          }
+        ]
+      },
+      {
+        "name": "Rosca Martelo",
+        "sets": [
+          {
+            "reps": 12,
+            "weight": 12,
+            "done": false
+          },
+          {
+            "reps": 12,
+            "weight": 12,
+            "done": false
+          },
+          {
+            "reps": 12,
+            "weight": 12,
+            "done": false
+          }
+        ]
+      },
+      {
+        "name": "Rosca Direta",
+        "sets": [
+          {
+            "reps": 12,
+            "weight": 10,
+            "done": false
+          },
+          {
+            "reps": 12,
+            "weight": 10,
+            "done": false
+          },
+          {
+            "reps": 12,
+            "weight": 10,
+            "done": false
+          }
+        ]
+      },
+      {
+        "name": "Pull down",
+        "sets": [
+          {
+            "reps": 12,
+            "weight": 30,
+            "done": false
+          },
+          {
+            "reps": 12,
+            "weight": 30,
+            "done": false
+          },
+          {
+            "reps": 12,
+            "weight": 30,
+            "done": false
+          }
+        ]
+      },
+      {
+        "name": "Remada Curvada",
+        "sets": [
+          {
+            "reps": 12,
+            "weight": 8,
+            "done": false
+          },
+          {
+            "reps": 12,
+            "weight": 8,
+            "done": false
+          },
+          {
+            "reps": 12,
+            "weight": 8,
+            "done": false
+          }
+        ]
+      },
+      {
+        "name": "Remada Aberta",
+        "sets": [
+          {
+            "reps": 12,
+            "weight": 30,
+            "done": false
+          },
+          {
+            "reps": 12,
+            "weight": 30,
+            "done": false
+          },
+          {
+            "reps": 12,
+            "weight": 30,
+            "done": false
+          }
+        ]
+      },
+      {
+        "name": "Puxada Aberta",
+        "sets": [
+          {
+            "reps": 12,
+            "weight": 40,
+            "done": false
+          },
+          {
+            "reps": 12,
+            "weight": 40,
+            "done": false
+          },
+          {
+            "reps": 12,
+            "weight": 50,
+            "done": false
+          },
+          {
+            "reps": 12,
+            "weight": 50,
+            "done": false
+          },
+          {
+            "reps": 12,
+            "weight": 50,
+            "done": false
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "TREINO 3 — PERNA COMPLETA",
+    "exercises": [
+      {
+        "name": "Cadeira Extensora",
+        "sets": [
+          {
+            "reps": 12,
+            "weight": 50,
+            "done": false
+          },
+          {
+            "reps": 12,
+            "weight": 50,
+            "done": false
+          },
+          {
+            "reps": 12,
+            "weight": 50,
+            "done": false
+          }
+        ]
+      },
+      {
+        "name": "Adutora",
+        "sets": [
+          {
+            "reps": 12,
+            "weight": 30,
+            "done": false
+          },
+          {
+            "reps": 12,
+            "weight": 30,
+            "done": false
+          },
+          {
+            "reps": 12,
+            "weight": 30,
+            "done": false
+          }
+        ]
+      },
+      {
+        "name": "Abdutora",
+        "sets": [
+          {
+            "reps": 12,
+            "weight": 30,
+            "done": false
+          },
+          {
+            "reps": 12,
+            "weight": 30,
+            "done": false
+          },
+          {
+            "reps": 12,
+            "weight": 30,
+            "done": false
+          }
+        ]
+      },
+      {
+        "name": "Agachamento Hack",
+        "sets": [
+          {
+            "reps": 12,
+            "weight": 30,
+            "done": false
+          },
+          {
+            "reps": 12,
+            "weight": 30,
+            "done": false
+          },
+          {
+            "reps": 12,
+            "weight": 30,
+            "done": false
+          }
+        ]
+      },
+      {
+        "name": "Flexor",
+        "sets": [
+          {
+            "reps": 12,
+            "weight": 45,
+            "done": false
+          },
+          {
+            "reps": 12,
+            "weight": 45,
+            "done": false
+          },
+          {
+            "reps": 12,
+            "weight": 45,
+            "done": false
+          }
+        ]
+      },
+      {
+        "name": "Leg Press",
+        "sets": [
+          {
+            "reps": 12,
+            "weight": 90,
+            "done": false
+          },
+          {
+            "reps": 12,
+            "weight": 90,
+            "done": false
+          },
+          {
+            "reps": 12,
+            "weight": 90,
+            "done": false
+          }
+        ]
+      },
+      {
+        "name": "Panturrilha",
+        "sets": [
+          {
+            "reps": 15,
+            "weight": 50,
+            "done": false
+          },
+          {
+            "reps": 15,
+            "weight": 50,
+            "done": false
+          },
+          {
+            "reps": 15,
+            "weight": 50,
+            "done": false
+          },
+          {
+            "reps": 15,
+            "weight": 50,
+            "done": false
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "TREINO 4 — OMBRO COMPLETO",
+    "exercises": [
+      {
+        "name": "Desenvolvimento halter",
+        "sets": [
+          {
+            "reps": 12,
+            "weight": 16,
+            "done": false
+          },
+          {
+            "reps": 12,
+            "weight": 16,
+            "done": false
+          },
+          {
+            "reps": 12,
+            "weight": 16,
+            "done": false
+          }
+        ]
+      },
+      {
+        "name": "Voador Dorsal",
+        "sets": [
+          {
+            "reps": 12,
+            "weight": 30,
+            "done": false
+          },
+          {
+            "reps": 12,
+            "weight": 30,
+            "done": false
+          },
+          {
+            "reps": 12,
+            "weight": 30,
+            "done": false
+          }
+        ]
+      },
+      {
+        "name": "Elevação Lateral",
+        "sets": [
+          {
+            "reps": 12,
+            "weight": 7,
+            "done": false
+          },
+          {
+            "reps": 12,
+            "weight": 7,
+            "done": false
+          },
+          {
+            "reps": 12,
+            "weight": 7,
+            "done": false
+          }
+        ]
+      },
+      {
+        "name": "Elevação Frontal",
+        "sets": [
+          {
+            "reps": 12,
+            "weight": 9,
+            "done": false
+          },
+          {
+            "reps": 12,
+            "weight": 9,
+            "done": false
+          },
+          {
+            "reps": 12,
+            "weight": 9,
+            "done": false
+          }
+        ]
+      },
+      {
+        "name": "Desenvolv. maquina",
+        "sets": [
+          {
+            "reps": 12,
+            "weight": 8,
+            "done": false
+          },
+          {
+            "reps": 12,
+            "weight": 8,
+            "done": false
+          },
+          {
+            "reps": 12,
+            "weight": 8,
+            "done": false
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "TREINO 5 — BÍCEPS E TRÍCEPS",
+    "exercises": [
+      {
+        "name": "Rosca Scott",
+        "sets": [
+          {
+            "reps": 12,
+            "weight": 20,
+            "done": false
+          },
+          {
+            "reps": 12,
+            "weight": 20,
+            "done": false
+          },
+          {
+            "reps": 12,
+            "weight": 20,
+            "done": false
+          }
+        ]
+      },
+      {
+        "name": "Rosca Direta",
+        "sets": [
+          {
+            "reps": 12,
+            "weight": 10,
+            "done": false
+          },
+          {
+            "reps": 12,
+            "weight": 10,
+            "done": false
+          },
+          {
+            "reps": 12,
+            "weight": 10,
+            "done": false
+          }
+        ]
+      },
+      {
+        "name": "Rosca Martelo",
+        "sets": [
+          {
+            "reps": 12,
+            "weight": 12,
+            "done": false
+          },
+          {
+            "reps": 12,
+            "weight": 12,
+            "done": false
+          },
+          {
+            "reps": 12,
+            "weight": 12,
+            "done": false
+          }
+        ]
+      },
+      {
+        "name": "Tríceps Corda",
+        "sets": [
+          {
+            "reps": 12,
+            "weight": 30,
+            "done": false
+          },
+          {
+            "reps": 12,
+            "weight": 30,
+            "done": false
+          },
+          {
+            "reps": 12,
+            "weight": 30,
+            "done": false
+          }
+        ]
+      },
+      {
+        "name": "Tríceps Testa",
+        "sets": [
+          {
+            "reps": 12,
+            "weight": 12,
+            "done": false
+          },
+          {
+            "reps": 12,
+            "weight": 12,
+            "done": false
+          },
+          {
+            "reps": 12,
+            "weight": 12,
+            "done": false
+          }
+        ]
+      },
+      {
+        "name": "Tríceps Francês",
+        "sets": [
+          {
+            "reps": 12,
+            "weight": 24,
+            "done": false
+          },
+          {
+            "reps": 12,
+            "weight": 24,
+            "done": false
+          },
+          {
+            "reps": 12,
+            "weight": 24,
+            "done": false
+          }
+        ]
+      }
+    ]
+  }
+]
