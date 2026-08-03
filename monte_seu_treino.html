@@ -2,374 +2,133 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Montador de Treino & Mapeamento Muscular</title>
+  <title>Mapeamento de Opacidade em SVG</title>
   <style>
-    :root {
-      --bg-color: #0f172a;
-      --card-bg: #1e293b;
-      --card-border: #334155;
-      --accent-color: #38bdf8;
-      --accent-hover: #0284c7;
-      --text-main: #f8fafc;
-      --text-muted: #94a3b8;
-      --danger: #ef4444;
-      --warning: #f59e0b;
+    .container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      font-family: Arial, sans-serif;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
-    body { background-color: var(--bg-color); color: var(--text-main); padding: 20px; min-height: 100vh; }
-    .header { text-align: center; margin-bottom: 24px; }
-    .header h1 { font-size: 1.8rem; color: var(--accent-color); margin-bottom: 8px; }
-    .header p { color: var(--text-muted); font-size: 0.95rem; }
+    /* Estilo e transição suave para os grupos do SVG */
+    .grupo-mapa {
+      transition: opacity 0.4s ease-in-out, fill 0.3s ease;
+      cursor: pointer;
+    }
 
-    .container { display: grid; grid-template-columns: 1fr; gap: 24px; max-width: 1400px; margin: 0 auto; }
-    @media (min-width: 1024px) { .container { grid-template-columns: 420px 1fr; } }
+    .grupo-mapa:hover {
+      filter: brightness(1.1);
+    }
 
-    /* Visualizador Muscular */
-    .visualizer-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; align-items: center; position: sticky; top: 20px; height: fit-content; }
-    .visualizer-card h2 { font-size: 1.2rem; margin-bottom: 12px; color: var(--accent-color); width: 100%; text-align: left; }
-    .canvas-container { position: relative; width: 100%; max-width: 380px; background: #090d16; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
-    canvas { width: 100%; height: auto; display: block; }
-    
-    .legend-box { margin-top: 16px; width: 100%; background: #0f172a; padding: 12px; border-radius: 8px; font-size: 0.85rem; }
-    .legend-title { font-weight: bold; color: var(--accent-color); margin-bottom: 6px; }
-    .active-muscles-list { display: flex; flex-wrap: wrap; gap: 6px; }
-    .muscle-badge { background: #3b82f6; color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; }
+    /* Controles de Opacidade (Controles Externos) */
+    .controles {
+      display: flex;
+      gap: 15px;
+      background: #f4f4f4;
+      padding: 15px;
+      border-radius: 8px;
+    }
 
-    /* Builder Card */
-    .builder-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 20px; }
-    .tabs-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--card-border); padding-bottom: 12px; flex-wrap: wrap; gap: 12px; }
-    .action-btn { background: var(--accent-color); color: #0f172a; border: none; padding: 10px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px; }
-    .action-btn:hover { background: var(--accent-hover); color: white; }
-    .btn-secondary { background: transparent; border: 1px solid var(--card-border); color: var(--text-main); }
-    .btn-secondary:hover { background: var(--card-border); }
-
-    .workout-list { display: flex; flex-direction: column; gap: 20px; }
-    .workout-item { background: #0f172a; border: 1px solid var(--card-border); border-radius: 8px; padding: 16px; }
-    .workout-header { display: flex; gap: 12px; align-items: center; margin-bottom: 16px; }
-    .workout-header input { background: #1e293b; border: 1px solid var(--card-border); color: var(--accent-color); font-weight: bold; font-size: 1.1rem; padding: 8px 12px; border-radius: 6px; flex: 1; }
-
-    .exercise-list { display: flex; flex-direction: column; gap: 12px; }
-    .exercise-card { background: #1e293b; border: 1px solid var(--card-border); border-radius: 6px; padding: 12px; transition: border-color 0.2s; }
-    .exercise-card:hover { border-color: var(--accent-color); }
-    .exercise-header { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; }
-    .exercise-select { background: #0f172a; border: 1px solid var(--card-border); color: var(--text-main); padding: 8px 12px; border-radius: 6px; flex: 1; font-size: 0.95rem; }
-
-    .sets-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
-    .sets-table th { text-align: left; font-size: 0.75rem; color: var(--text-muted); padding: 4px; text-transform: uppercase; }
-    .sets-table td { padding: 4px; }
-    .sets-table input { width: 100%; background: #0f172a; border: 1px solid var(--card-border); color: var(--text-main); padding: 6px 8px; border-radius: 4px; text-align: center; }
-
-    .btn-icon { background: transparent; border: none; color: var(--danger); cursor: pointer; font-size: 1.1rem; padding: 4px 8px; }
-    .btn-add-set { background: transparent; border: 1px dashed var(--card-border); color: var(--accent-color); width: 100%; padding: 6px; border-radius: 4px; cursor: pointer; font-size: 0.85rem; }
-    .btn-add-set:hover { background: rgba(56, 189, 248, 0.1); }
-
-    /* Modal */
-    .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center; padding: 20px; }
-    .modal-content { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; width: 100%; max-width: 700px; max-height: 85vh; display: flex; flex-direction: column; padding: 20px; }
-    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-    textarea#jsonOutput { width: 100%; height: 380px; background: #090d16; color: #38bdf8; font-family: monospace; padding: 12px; border-radius: 6px; border: 1px solid var(--card-border); resize: vertical; }
+    .controle-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+    }
   </style>
 </head>
 <body>
 
-  <div class="header">
-    <h1>Montador de Treino & Mapeamento Muscular</h1>
-    <p>Monte seu treino e visualize os grupos musculares envolvidos na imagem anatômica.</p>
-  </div>
+<div class="container">
+  <h2>Mapeamento de Opacidade por Grupo</h2>
 
-  <div class="container">
-    <div class="visualizer-card">
-      <h2>Mapeamento de Grupos Musculares</h2>
-      <div class="canvas-container">
-        <canvas id="muscleCanvas" width="400" height="580"></canvas>
-      </div>
-      <div class="legend-box">
-        <div class="legend-title">Músculos Solicitados no Treino:</div>
-        <div class="active-muscles-list" id="activeMusclesBadge">
-          <span style="color: var(--text-muted); font-size: 0.8rem;">Selecione ou passe o mouse nos exercícios...</span>
-        </div>
-      </div>
+  <!-- SEU SVG / SUA IMAGEM (Substitua ou estruture com seus <g>) -->
+  <svg id="meuMapa" width="400" height="300" viewBox="0 0 400 300" style="background: #e0e0e0; border-radius: 8px;">
+    
+    <!-- Grupo 1 -->
+    <g id="grupo-1" class="grupo-mapa" style="opacity: 1;">
+      <rect x="30" y="30" width="100" height="100" fill="#e74c3c" rx="10" />
+      <text x="80" y="85" fill="#fff" text-anchor="middle">Grupo A</text>
+    </g>
+
+    <!-- Grupo 2 -->
+    <g id="grupo-2" class="grupo-mapa" style="opacity: 1;">
+      <circle cx="200" cy="80" r="50" fill="#3498db" />
+      <text x="200" y="85" fill="#fff" text-anchor="middle">Grupo B</text>
+    </g>
+
+    <!-- Grupo 3 -->
+    <g id="grupo-3" class="grupo-mapa" style="opacity: 1;">
+      <polygon points="320,30 370,130 270,130" fill="#2ecc71" />
+      <text x="320" y="105" fill="#fff" text-anchor="middle">Grupo C</text>
+    </g>
+
+  </svg>
+
+  <!-- Painel de Controles com Sliders de Opacidade -->
+  <div class="controles">
+    <div class="controle-item">
+      <label for="range-1">Opacidade Grupo A</label>
+      <input type="range" id="range-1" min="0" max="1" step="0.05" value="1" oninput="atualizarOpacidade('grupo-1', this.value)">
     </div>
 
-    <div class="builder-card">
-      <div class="tabs-header">
-        <button class="action-btn" onclick="addNewWorkout()">+ Novo Treino</button>
-        <button class="action-btn btn-secondary" onclick="exportJSON()">📋 Gerar / Exportar JSON</button>
-      </div>
-      <div class="workout-list" id="workoutContainer"></div>
+    <div class="controle-item">
+      <label for="range-2">Opacidade Grupo B</label>
+      <input type="range" id="range-2" min="0" max="1" step="0.05" value="1" oninput="atualizarOpacidade('grupo-2', this.value)">
+    </div>
+
+    <div class="controle-item">
+      <label for="range-3">Opacidade Grupo C</label>
+      <input type="range" id="range-3" min="0" max="1" step="0.05" value="1" oninput="atualizarOpacidade('grupo-3', this.value)">
     </div>
   </div>
 
-  <div class="modal" id="jsonModal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3>JSON Exportável para o App</h3>
-        <button class="btn-icon" onclick="closeModal()">✕</button>
-      </div>
-      <textarea id="jsonOutput" readonly></textarea>
-      <div style="display: flex; gap: 10px; margin-top: 12px; justify-content: flex-end;">
-        <button class="action-btn btn-secondary" onclick="closeModal()">Fechar</button>
-        <button class="action-btn" onclick="copyJSON()">Copiar JSON</button>
-      </div>
-    </div>
+  <!-- Exemplo de Botões de Estado Pré-definidos -->
+  <div>
+    <button onclick="destacarApenas('grupo-1')">Focar em A</button>
+    <button onclick="destacarApenas('grupo-2')">Focar em B</button>
+    <button onclick="destacarApenas('grupo-3')">Focar em C</button>
+    <button onclick="resetarOpacidade()">Mostrar Todos</button>
   </div>
+</div>
 
-  <script>
-    const exerciseDatabase = {
-      "Supino": { target: [3], secondary: [4, 5, 28] },
-      "Supino Inclinado": { target: [3], secondary: [4, 28] },
-      "Supino Declinado": { target: [3], secondary: [28] },
-      "Fly": { target: [3], secondary: [4] },
-      "Flexão de Braço": { target: [3], secondary: [4, 28, 7, 10] },
-      "Puxada Aberta": { target: [31, 32, 13], secondary: [15, 16] },
-      "Remada Aberta": { target: [31, 32, 25, 26], secondary: [15] },
-      "Remada Curvada": { target: [31, 32, 25, 26], secondary: [15, 16] },
-      "Pull down": { target: [31, 32], secondary: [28] },
-      "Desenvolv. maquina": { target: [4, 5], secondary: [2, 28] },
-      "Desenvolvimento halter": { target: [4, 5], secondary: [2, 28] },
-      "Elevação Lateral": { target: [5], secondary: [27] },
-      "Elevação Frontal": { target: [4], secondary: [] },
-      "Voador Dorsal": { target: [27], secondary: [25, 26] },
-      "Rosca Direta": { target: [15], secondary: [16] },
-      "Rosca Scott": { target: [15], secondary: [16] },
-      "Rosca Martelo": { target: [16], secondary: [17] },
-      "Tríceps pulley": { target: [28], secondary: [] },
-      "Tríceps Corda": { target: [28], secondary: [] },
-      "Tríceps Francês": { target: [28], secondary: [] },
-      "Tríceps Testa": { target: [28], secondary: [] },
-      "Agachamento Hack": { target: [20, 21], secondary: [36] },
-      "Leg Press": { target: [20, 21], secondary: [36] },
-      "Cadeira Extensora": { target: [20, 21], secondary: [] },
-      "Adutora": { target: [20, 21], secondary: [] },
-      "Abdutora": { target: [35], secondary: [36] },
-      "Flexor": { target: [37, 38], secondary: [] },
-      "Panturrilha": { target: [39, 40], secondary: [] }
-    };
+<script>
+  // Função para atualizar a opacidade de um grupo individual
+  function atualizarOpacidade(idGrupo, valorOpacidade) {
+    const grupo = document.getElementById(idGrupo);
+    if (grupo) {
+      grupo.style.opacity = valorOpacidade;
+    }
+  }
 
-    const muscleCoordinates = {
-      2: { name: "Trapézio Sup.", x: 100, y: 150, r: 12 },
-      3: { name: "Peitoral", x: 100, y: 180, r: 25 },
-      4: { name: "Deltoide Ant.", x: 65, y: 165, r: 14 },
-      5: { name: "Deltoide Lat.", x: 55, y: 180, r: 12 },
-      7: { name: "Abdômen Sup.", x: 100, y: 220, r: 14 },
-      10: { name: "Abdômen Inf.", x: 100, y: 250, r: 14 },
-      15: { name: "Bíceps", x: 50, y: 220, r: 12 },
-      16: { name: "Braquial", x: 45, y: 240, r: 10 },
-      17: { name: "Antebraço", x: 38, y: 275, r: 12 },
-      20: { name: "Quadríceps", x: 85, y: 350, r: 22 },
-      21: { name: "Vasto Lat.", x: 115, y: 350, r: 22 },
-      25: { name: "Trapézio Sup.", x: 300, y: 145, r: 15 },
-      26: { name: "Trapézio Médio", x: 300, y: 170, r: 15 },
-      27: { name: "Deltoide Post.", x: 345, y: 165, r: 14 },
-      28: { name: "Tríceps", x: 350, y: 215, r: 14 },
-      31: { name: "Dorsal Sup.", x: 300, y: 210, r: 20 },
-      32: { name: "Dorsal Inf.", x: 300, y: 245, r: 18 },
-      35: { name: "Glúteo Médio", x: 275, y: 300, r: 14 },
-      36: { name: "Glúteo Máximo", x: 300, y: 320, r: 22 },
-      37: { name: "Posterior Coxa", x: 285, y: 380, r: 18 },
-      38: { name: "Semitendíneo", x: 315, y: 380, r: 18 },
-      39: { name: "Panturrilha Sup.", x: 300, y: 460, r: 16 },
-      40: { name: "Panturrilha Inf.", x: 300, y: 490, r: 14 }
-    };
-
-    let workoutsData = [
-      {
-        "name": "TREINO 1 — PEITO E TRÍCEPS",
-        "exercises": [
-          { "name": "Supino", "sets": [{ "reps": 12, "weight": 15, "done": false }, { "reps": 12, "weight": 23, "done": false }] },
-          { "name": "Fly", "sets": [{ "reps": 12, "weight": 40, "done": false }] },
-          { "name": "Tríceps pulley", "sets": [{ "reps": 12, "weight": 30, "done": false }] }
-        ]
+  // Função para destacar apenas um grupo específico (reduz a opacidade dos outros)
+  function destacarApenas(idGrupoAtivo) {
+    const todosGrupos = document.querySelectorAll('.grupo-mapa');
+    
+    todosGrupos.forEach(grupo => {
+      const slider = document.querySelector(`input[oninput*="${grupo.id}"]`);
+      if (grupo.id === idGrupoAtivo) {
+        grupo.style.opacity = '1';
+        if (slider) slider.value = '1';
+      } else {
+        grupo.style.opacity = '0.25'; // Deixa semi-transparente
+        if (slider) slider.value = '0.25';
       }
-    ];
+    });
+  }
 
-    let highlightedMuscles = { target: new Set(), secondary: new Set() };
+  // Função para restaurar a opacidade total de todos os grupos
+  function resetarOpacidade() {
+    const todosGrupos = document.querySelectorAll('.grupo-mapa');
+    todosGrupos.forEach(grupo => {
+      grupo.style.opacity = '1';
+      const slider = document.querySelector(`input[oninput*="${grupo.id}"]`);
+      if (slider) slider.value = '1';
+    });
+  }
+</script>
 
-    function init() { renderWorkouts(); drawMuscleMap(); }
-
-    function drawMuscleMap() {
-      const canvas = document.getElementById('muscleCanvas');
-      const ctx = canvas.getContext('2d');
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = "#090d16";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      drawBodySilhouette(ctx, 100, "FRENTE");
-      drawBodySilhouette(ctx, 300, "COSTAS");
-      updateActiveMuscles();
-
-      Object.keys(muscleCoordinates).forEach(id => {
-        const muscle = muscleCoordinates[id];
-        const isTarget = highlightedMuscles.target.has(parseInt(id));
-        const isSecondary = highlightedMuscles.secondary.has(parseInt(id));
-
-        ctx.beginPath();
-        ctx.arc(muscle.x, muscle.y, muscle.r, 0, Math.PI * 2);
-
-        if (isTarget) {
-          ctx.fillStyle = "rgba(239, 68, 68, 0.85)";
-          ctx.strokeStyle = "#ffffff";
-          ctx.lineWidth = 2;
-        } else if (isSecondary) {
-          ctx.fillStyle = "rgba(245, 158, 11, 0.75)";
-          ctx.strokeStyle = "#ffffff";
-          ctx.lineWidth = 1.5;
-        } else {
-          ctx.fillStyle = "rgba(51, 65, 85, 0.4)";
-          ctx.strokeStyle = "rgba(148, 163, 184, 0.2)";
-          ctx.lineWidth = 1;
-        }
-
-        ctx.fill();
-        ctx.stroke();
-
-        ctx.fillStyle = (isTarget || isSecondary) ? "#ffffff" : "#64748b";
-        ctx.font = "10px sans-serif";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText(id, muscle.x, muscle.y);
-      });
-    }
-
-    function drawBodySilhouette(ctx, centerX, label) {
-      ctx.fillStyle = "rgba(30, 41, 59, 0.5)";
-      ctx.strokeStyle = "rgba(51, 65, 85, 0.8)";
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.arc(centerX, 90, 22, 0, Math.PI * 2);
-      ctx.fill(); ctx.stroke();
-      ctx.beginPath();
-      ctx.roundRect(centerX - 35, 130, 70, 160, 10);
-      ctx.roundRect(centerX - 55, 140, 18, 150, 8);
-      ctx.roundRect(centerX + 37, 140, 18, 150, 8);
-      ctx.roundRect(centerX - 30, 290, 25, 240, 8);
-      ctx.roundRect(centerX + 5, 290, 25, 240, 8);
-      ctx.fill(); ctx.stroke();
-      ctx.fillStyle = "#94a3b8";
-      ctx.font = "bold 12px sans-serif";
-      ctx.textAlign = "center";
-      ctx.fillText(label, centerX, 50);
-    }
-
-    function updateActiveMuscles() {
-      highlightedMuscles.target.clear();
-      highlightedMuscles.secondary.clear();
-      workoutsData.forEach(w => {
-        w.exercises.forEach(ex => {
-          const info = exerciseDatabase[ex.name];
-          if (info) {
-            info.target.forEach(id => highlightedMuscles.target.add(id));
-            info.secondary.forEach(id => highlightedMuscles.secondary.add(id));
-          }
-        });
-      });
-
-      const container = document.getElementById('activeMusclesBadge');
-      container.innerHTML = "";
-      const allActive = [...highlightedMuscles.target, ...highlightedMuscles.secondary];
-      if (allActive.length === 0) {
-        container.innerHTML = '<span style="color: var(--text-muted); font-size: 0.8rem;">Nenhum músculo atingido.</span>';
-        return;
-      }
-
-      allActive.forEach(id => {
-        const info = muscleCoordinates[id];
-        const isTarget = highlightedMuscles.target.has(id);
-        const badge = document.createElement('span');
-        badge.className = 'muscle-badge';
-        badge.style.background = isTarget ? '#ef4444' : '#f59e0b';
-        badge.innerText = `${id}: ${info ? info.name : 'Músculo'}`;
-        container.appendChild(badge);
-      });
-    }
-
-    function renderWorkouts() {
-      const container = document.getElementById('workoutContainer');
-      container.innerHTML = "";
-      workoutsData.forEach((workout, wIndex) => {
-        const workoutDiv = document.createElement('div');
-        workoutDiv.className = 'workout-item';
-        workoutDiv.innerHTML = `
-          <div class="workout-header">
-            <input type="text" value="${workout.name}" onchange="updateWorkoutName(${wIndex}, this.value)">
-            <button class="btn-icon" onclick="removeWorkout(${wIndex})">🗑️</button>
-          </div>
-          <div class="exercise-list">
-            ${workout.exercises.map((ex, eIndex) => renderExerciseHTML(wIndex, eIndex, ex)).join('')}
-          </div>
-          <button class="action-btn btn-secondary" style="margin-top: 12px; width: 100%;" onclick="addExercise(${wIndex})">+ Adicionar Exercício</button>
-        `;
-        container.appendChild(workoutDiv);
-      });
-      drawMuscleMap();
-    }
-
-    function renderExerciseHTML(wIndex, eIndex, ex) {
-      const options = Object.keys(exerciseDatabase).map(name => 
-        `<option value="${name}" ${name === ex.name ? 'selected' : ''}>${name}</option>`
-      ).join('');
-
-      return `
-        <div class="exercise-card" onmouseenter="previewMuscle('${ex.name}')" onmouseleave="drawMuscleMap()">
-          <div class="exercise-header">
-            <select class="exercise-select" onchange="updateExerciseName(${wIndex}, ${eIndex}, this.value)">
-              ${options}
-            </select>
-            <button class="btn-icon" onclick="removeExercise(${wIndex}, ${eIndex})">✕</button>
-          </div>
-          <table class="sets-table">
-            <thead>
-              <tr><th>Série</th><th>Reps</th><th>Carga (kg)</th><th></th></tr>
-            </thead>
-            <tbody>
-              ${ex.sets.map((set, sIndex) => `
-                <tr>
-                  <td style="text-align: center; color: var(--text-muted);">${sIndex + 1}</td>
-                  <td><input type="number" value="${set.reps}" onchange="updateSet(${wIndex}, ${eIndex}, ${sIndex}, 'reps', this.value)"></td>
-                  <td><input type="number" value="${set.weight}" onchange="updateSet(${wIndex}, ${eIndex}, ${sIndex}, 'weight', this.value)"></td>
-                  <td><button class="btn-icon" onclick="removeSet(${wIndex}, ${eIndex}, ${sIndex})">✕</button></td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-          <button class="btn-add-set" onclick="addSet(${wIndex}, ${eIndex})">+ Adicionar Série</button>
-        </div>
-      `;
-    }
-
-    function updateWorkoutName(wIndex, val) { workoutsData[wIndex].name = val; }
-    function addNewWorkout() { workoutsData.push({ name: `TREINO ${workoutsData.length + 1}`, exercises: [] }); renderWorkouts(); }
-    function removeWorkout(wIndex) { workoutsData.splice(wIndex, 1); renderWorkouts(); }
-    function addExercise(wIndex) { workoutsData[wIndex].exercises.push({ name: Object.keys(exerciseDatabase)[0], sets: [{ reps: 12, weight: 10, done: false }] }); renderWorkouts(); }
-    function updateExerciseName(wIndex, eIndex, val) { workoutsData[wIndex].exercises[eIndex].name = val; renderWorkouts(); }
-    function removeExercise(wIndex, eIndex) { workoutsData[wIndex].exercises.splice(eIndex, 1); renderWorkouts(); }
-    function addSet(wIndex, eIndex) { workoutsData[wIndex].exercises[eIndex].sets.push({ reps: 12, weight: 10, done: false }); renderWorkouts(); }
-    function updateSet(wIndex, eIndex, sIndex, field, val) { workoutsData[wIndex].exercises[eIndex].sets[sIndex][field] = parseInt(val) || 0; }
-    function removeSet(wIndex, eIndex, sIndex) { workoutsData[wIndex].exercises[eIndex].sets.splice(sIndex, 1); renderWorkouts(); }
-
-    function previewMuscle(exName) {
-      const info = exerciseDatabase[exName];
-      if (!info) return;
-      highlightedMuscles.target = new Set(info.target);
-      highlightedMuscles.secondary = new Set(info.secondary);
-      drawMuscleMap();
-    }
-
-    function exportJSON() {
-      document.getElementById('jsonOutput').value = JSON.stringify(workoutsData, null, 2);
-      document.getElementById('jsonModal').style.display = 'flex';
-    }
-    function closeModal() { document.getElementById('jsonModal').style.display = 'none'; }
-    function copyJSON() {
-      const textarea = document.getElementById('jsonOutput');
-      textarea.select();
-      document.execCommand('copy');
-      alert('JSON copiado com sucesso!');
-    }
-
-    window.onload = init;
-  </script>
 </body>
 </html>
