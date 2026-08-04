@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Montador de Treino & Mapeamento Muscular</title>
+  <style>
+    :root {
+      --bg-color: #0f172a;
+      --card-bg: #1e293b;
+      --card-border: #334155;
+      --accent-color: #38bdf8;
+      --accent-hover: #0284c7;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    body { background-color: var(--bg-color); color: var(--text-main); padding: 20px; min-height: 100vh; }
+    .header { text-align: center; margin-bottom: 24px; }
+    .header h1 { font-size: 1.8rem; color: var(--accent-color); margin-bottom: 8px; }
+    .header p { color: var(--text-muted); font-size: 0.95rem; }
+
+    .container { display: grid; grid-template-columns: 1fr; gap: 24px; max-width: 1400px; margin: 0 auto; }
+    @media (min-width: 1024px) { .container { grid-template-columns: 420px 1fr; } }
+
+    /* Visualizador Muscular Integrado */
+    .visualizer-card { 
+      background: var(--card-bg); 
+      border: 1px solid var(--card-border); 
+      border-radius: 12px; 
+      padding: 20px; 
+      display: flex; 
+      flex-direction: column; 
+      align-items: center; 
+      position: sticky; 
+      top: 20px; 
+      height: fit-content; 
+    }
+    .visualizer-card h2 { font-size: 1.2rem; margin-bottom: 12px; color: var(--accent-color); width: 100%; text-align: left; }
+    
+    .map-container { 
+      position: relative; 
+      width: 100%; 
+      max-width: 380px; 
+      background: #090d16; 
+      border-radius: 8px; 
+      overflow: hidden; 
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+      aspect-ratio: 400 / 580;
+    }
+    
+    .map-image { 
+      width: 100%; 
+      height: 100%; 
+      object-fit: contain; 
+      opacity: 0.3; 
+      transition: opacity 0.3s ease;
+    }
+    
+    .svg-overlay { 
+      position: absolute; 
+      top: 0; 
+      left: 0; 
+      width: 100%; 
+      height: 100%; 
+      pointer-events: none; 
+    }
+
+    .muscle-region { 
+      opacity: 0; 
+      transition: opacity 0.3s ease, fill-opacity 0.3s ease; 
+    }
+    
+    .muscle-region.active { 
+      opacity: 1; 
+    }
+    
+    .muscle-region.secondary {
+      opacity: 0.6;
+    }
+
+    .legend-box { margin-top: 16px; width: 100%; background: #0f172a; padding: 12px; border-radius: 8px; font-size: 0.85rem; }
+    .legend-title { font-weight: bold; color: var(--accent-color); margin-bottom: 6px; }
+    .active-muscles-list { display: flex; flex-wrap: wrap; gap: 6px; }
+    .muscle-badge { background: #3b82f6; color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; }
+
+    /* Builder Card */
+    .builder-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 20px; }
+    .tabs-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--card-border); padding-bottom: 12px; flex-wrap: wrap; gap: 12px; }
+    .action-btn { background: var(--accent-color); color: #0f172a; border: none; padding: 10px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px; }
+    .action-btn:hover { background: var(--accent-hover); color: white; }
+    .btn-secondary { background: transparent; border: 1px solid var(--card-border); color: var(--text-main); }
+    .btn-secondary:hover { background: var(--card-border); }
+
+    .workout-list { display: flex; flex-direction: column; gap: 20px; }
+    .workout-item { background: #0f172a; border: 1px solid var(--card-border); border-radius: 8px; padding: 16px; }
+    .workout-header { display: flex; gap: 12px; align-items: center; margin-bottom: 16px; }
+    .workout-header input { background: #1e293b; border: 1px solid var(--card-border); color: var(--accent-color); font-weight: bold; font-size: 1.1rem; padding: 8px 12px; border-radius: 6px; flex: 1; }
+
+    .exercise-list { display: flex; flex-direction: column; gap: 12px; }
+    .exercise-card { background: #1e293b; border: 1px solid var(--card-border); border-radius: 6px; padding: 12px; transition: border-color 0.2s; }
+    .exercise-card:hover { border-color: var(--accent-color); }
+    .exercise-header { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; }
+    .exercise-select { background: #0f172a; border: 1px solid var(--card-border); color: var(--text-main); padding: 8px 12px; border-radius: 6px; flex: 1; font-size: 0.95rem; }
+
+    .sets-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+    .sets-table th { text-align: left; font-size: 0.75rem; color: var(--text-muted); padding: 4px; text-transform: uppercase; }
+    .sets-table td { padding: 4px; }
+    .sets-table input { width: 100%; background: #0f172a; border: 1px solid var(--card-border); color: var(--text-main); padding: 6px 8px; border-radius: 4px; text-align: center; }
+
+    .btn-icon { background: transparent; border: none; color: var(--danger); cursor: pointer; font-size: 1.1rem; padding: 4px 8px; }
+    .btn-add-set { background: transparent; border: 1px dashed var(--card-border); color: var(--accent-color); width: 100%; padding: 6px; border-radius: 4px; cursor: pointer; font-size: 0.85rem; }
+    .btn-add-set:hover { background: rgba(56, 189, 248, 0.1); }
+
+    /* Modal */
+    .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center; padding: 20px; }
+    .modal-content { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; width: 100%; max-width: 700px; max-height: 85vh; display: flex; flex-direction: column; padding: 20px; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    textarea#jsonOutput { width: 100%; height: 380px; background: #090d16; color: #38bdf8; font-family: monospace; padding: 12px; border-radius: 6px; border: 1px solid var(--card-border); resize: vertical; }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <h1>Montador de Treino & Mapeamento Muscular</h1>
+    <p>Monte seu treino e visualize os grupos musculares envolvidos na imagem anatômica.</p>
+  </div>
+
+  <div class="container">
+    <!-- Visualizador Muscular -->
+    <div class="visualizer-card">
+      <h2>Mapeamento de Grupos Musculares</h2>
+      <div class="map-container">
+        <!-- Substitua 'anatomia.jpg' pelo caminho real da sua imagem -->
+        <img src="anatomia.jpg" alt="Anatomia Muscular" class="map-image">
+        <svg class="svg-overlay" viewBox="0 0 400 580" id="muscleSvg">
+          <!-- As regiões SVG serão inseridas ou controladas via JS -->
+          <!-- Exemplo de estrutura que você deve seguir para os caminhos SVG -->
+             <!-- 1: Pescoço / Neck -->
+  <g id="region-1" class="muscle-region">
+    <path d="M 110 95 L 120 95 L 122 120 L 108 120 Z M 280 95 L 290 95 L 292 125 L 278 125 Z" fill="#ef4444" fill-opacity="0.6" stroke="#ef4444" stroke-width="2"></path>
+  </g>
+
+  <!-- 2: Trapezius (Frente) -->
+  <g id="region-2" class="muscle-region">
+    <path d="M 95 118 L 108 120 L 105 138 L 82 135 Z M 122 120 L 135 118 L 148 135 L 125 138 Z" fill="#22c55e" fill-opacity="0.6" stroke="#22c55e" stroke-width="2"></path>
+  </g>
+
+  <!-- 3: Pectoralis Maior (Frente) -->
+  <g id="region-3" class="muscle-region">
+    <path d="M 80 142 L 112 142 L 112 180 L 82 172 Z M 118 142 L 150 142 L 148 172 L 118 180 Z" fill="#ef4444" fill-opacity="0.6" stroke="#ef4444" stroke-width="2"></path>
+  </g>
+
+  <!-- 4: Deltoids (Ombro Direito - Frente) -->
+  <g id="region-4" class="muscle-region">
+    <path d="M 52 135 C 65 130, 80 135, 80 145 C 78 165, 62 180, 52 162 Z" fill="#22c55e" fill-opacity="0.6" stroke="#22c55e" stroke-width="2"></path>
+  </g>
+
+  <!-- 5: Deltoids (Ombro Esquerdo - Frente) -->
+  <g id="region-5" class="muscle-region">
+    <path d="M 178 135 C 165 130, 150 135, 150 145 C 152 165, 168 180, 178 162 Z" fill="#22c55e" fill-opacity="0.6" stroke="#22c55e" stroke-width="2"></path>
+  </g>
+
+  <!-- 6: Brachialis / Lateral Braço -->
+  <g id="region-6" class="muscle-region">
+    <path d="M 48 162 L 56 168 L 52 190 L 44 180 Z M 182 162 L 174 168 L 178 190 L 186 180 Z" fill="#0ea5e9" fill-opacity="0.6" stroke="#0ea5e9" stroke-width="2"></path>
+  </g>
+
+  <!-- 7: Rectus Abdominis Superior (Frente - Azul) -->
+  <g id="region-7" class="muscle-region">
+    <path d="M 94 182 L 112 182 L 112 196 L 94 196 Z" fill="#0ea5e9" fill-opacity="0.6" stroke="#0ea5e9" stroke-width="2"></path>
+  </g>
+
+  <!-- 8: Rectus Abdominis Superior (Frente - Azul/Verde) -->
+  <g id="region-8" class="muscle-region">
+    <path d="M 118 182 L 136 182 L 136 196 L 118 196 Z M 94 198 L 112 198 L 112 214 L 94 214 Z" fill="#22c55e" fill-opacity="0.6" stroke="#22c55e" stroke-width="2"></path>
+  </g>
+
+  <!-- 9: Rectus Abdominis Médio (Frente - Verde) -->
+  <g id="region-9" class="muscle-region">
+    <path d="M 118 198 L 136 198 L 136 214 L 118 214 Z" fill="#22c55e" fill-opacity="0.6" stroke="#22c55e" stroke-width="2"></path>
+  </g>
+
+  <!-- 10: Rectus Abdominis Inferior (Frente - Esquerda) -->
+  <g id="region-10" class="muscle-region">
+    <path d="M 94 216 L 112 216 L 112 234 L 94 234 Z" fill="#22c55e" fill-opacity="0.6" stroke="#22c55e" stroke-width="2"></path>
+  </g>
+
+  <!-- 11: Rectus Abdominis Inferior (Frente - Direita) -->
+  <g id="region-11" class="muscle-region">
+    <path d="M 118 216 L 136 216 L 136 234 L 118 234 Z" fill="#22c55e" fill-opacity="0.6" stroke="#22c55e" stroke-width="2"></path>
+  </g>
+
+  <!-- 12: Abdominal Infra / Pubis (Frente - Verde) -->
+  <g id="region-12" class="muscle-region">
+    <path d="M 94 236 L 136 236 L 115 280 Z" fill="#22c55e" fill-opacity="0.6" stroke="#22c55e" stroke-width="2"></path>
+  </g>
+
+  <!-- 13: Latissimus / Obliquus Lateral Esquerdo -->
+  <g id="region-13" class="muscle-region">
+    <path d="M 78 182 L 92 182 L 92 245 L 75 220 Z" fill="#0ea5e9" fill-opacity="0.6" stroke="#0ea5e9" stroke-width="2"></path>
+  </g>
+
+  <!-- 14: Latissimus / Obliquus Lateral Direito -->
+  <g id="region-14" class="muscle-region">
+    <path d="M 138 182 L 152 182 L 155 220 L 138 245 Z" fill="#0ea5e9" fill-opacity="0.6" stroke="#0ea5e9" stroke-width="2"></path>
+  </g>
+
+  <!-- 15: Biceps Brachii -->
+  <g id="region-15" class="muscle-region">
+    <path d="M 54 165 L 68 168 L 64 205 L 52 195 Z M 162 168 L 176 165 L 178 195 L 166 205 Z" fill="#0ea5e9" fill-opacity="0.6" stroke="#0ea5e9" stroke-width="2"></path>
+  </g>
+
+  <!-- 16: Brachialis Inferior -->
+  <g id="region-16" class="muscle-region">
+    <path d="M 166 206 L 176 196 L 174 222 L 164 225 Z" fill="#0ea5e9" fill-opacity="0.6" stroke="#0ea5e9" stroke-width="2"></path>
+  </g>
+
+  <!-- 17: Antebraço Brachioradialis (Frente Esquerda) -->
+  <g id="region-17" class="muscle-region">
+    <path d="M 40 205 L 54 208 L 48 265 L 35 255 Z" fill="#22c55e" fill-opacity="0.6" stroke="#22c55e" stroke-width="2"></path>
+  </g>
+
+  <!-- 18: Antebraço Flexores (Frente Direita Interno) -->
+  <g id="region-18" class="muscle-region">
+    <path d="M 162 225 L 172 222 L 168 268 L 158 260 Z" fill="#22c55e" fill-opacity="0.6" stroke="#22c55e" stroke-width="2"></path>
+  </g>
+
+  <!-- 19: Antebraço Extensores (Frente Direita Externo) -->
+  <g id="region-19" class="muscle-region">
+    <path d="M 174 222 L 186 215 L 195 260 L 178 268 Z" fill="#0ea5e9" fill-opacity="0.6" stroke="#0ea5e9" stroke-width="2"></path>
+  </g>
+
+  <!-- 20: Quadriceps Rectus Femoris (Frente) -->
+  <g id="region-20" class="muscle-region">
+    <path d="M 78 275 L 100 275 L 102 360 L 82 350 Z M 130 275 L 152 275 L 148 350 L 128 360 Z" fill="#ef4444" fill-opacity="0.6" stroke="#ef4444" stroke-width="2"></path>
+  </g>
+
+  <!-- 21: Quadriceps Vastus Lateralis (Frente) -->
+  <g id="region-21" class="muscle-region">
+    <path d="M 68 280 L 78 278 L 80 345 L 68 330 Z M 152 278 L 162 280 L 162 330 L 150 345 Z" fill="#ef4444" fill-opacity="0.6" stroke="#ef4444" stroke-width="2"></path>
+  </g>
+
+  <!-- 22: Adutores (Frente Interno) -->
+  <g id="region-22" class="muscle-region">
+    <path d="M 102 280 L 114 280 L 112 340 L 102 340 Z M 116 280 L 128 280 L 128 340 L 118 340 Z" fill="#22c55e" fill-opacity="0.6" stroke="#22c55e" stroke-width="2"></path>
+  </g>
+
+  <!-- 23: Tibialis Anterior (Canela Frente) -->
+  <g id="region-23" class="muscle-region">
+    <path d="M 82 385 L 98 385 L 94 480 L 85 470 Z M 132 385 L 148 385 L 145 470 L 136 480 Z" fill="#ef4444" fill-opacity="0.6" stroke="#ef4444" stroke-width="2"></path>
+  </g>
+
+  <!-- 24: Peito do Pé / Extensores (Frente) -->
+  <g id="region-24" class="muscle-region">
+    <path d="M 80 482 L 100 482 L 98 502 L 75 500 Z M 130 482 L 150 482 L 155 500 L 132 502 Z" fill="#ef4444" fill-opacity="0.6" stroke="#ef4444" stroke-width="2"></path>
+  </g>
+
+  <!-- 25: Trapezius Superior Esquerdo (Costas) -->
+  <g id="region-25" class="muscle-region">
+    <path d="M 260 118 L 282 120 L 282 160 L 250 135 Z" fill="#ef4444" fill-opacity="0.6" stroke="#ef4444" stroke-width="2"></path>
+  </g>
+
+  <!-- 26: Trapezius Superior Direito (Costas) -->
+  <g id="region-26" class="muscle-region">
+    <path d="M 288 120 L 310 118 L 320 135 L 288 160 Z" fill="#ef4444" fill-opacity="0.6" stroke="#ef4444" stroke-width="2"></path>
+  </g>
+
+  <!-- 27: Rear Deltoids (Ombros Costas) -->
+  <g id="region-27" class="muscle-region">
+    <path d="M 222 135 C 235 130, 250 135, 250 148 L 228 165 Z M 320 148 C 320 135, 335 130, 348 135 L 342 165 Z" fill="#0ea5e9" fill-opacity="0.6" stroke="#0ea5e9" stroke-width="2"></path>
+  </g>
+
+  <!-- 28: Triceps Brachii (Costas) -->
+  <g id="region-28" class="muscle-region">
+    <path d="M 222 168 L 236 162 L 238 215 L 226 205 Z M 334 162 L 348 168 L 344 205 L 332 215 Z" fill="#ef4444" fill-opacity="0.6" stroke="#ef4444" stroke-width="2"></path>
+  </g>
+
+  <!-- 29: Infraspinatus / Teres Esquerdo (Costas) -->
+  <g id="region-29" class="muscle-region">
+    <path d="M 238 160 L 255 148 L 262 180 L 242 178 Z" fill="#a855f7" fill-opacity="0.6" stroke="#a855f7" stroke-width="2"></path>
+  </g>
+
+  <!-- 30: Infraspinatus / Teres Direito (Costas) -->
+  <g id="region-30" class="muscle-region">
+    <path d="M 315 148 L 332 160 L 328 178 L 308 180 Z" fill="#a855f7" fill-opacity="0.6" stroke="#a855f7" stroke-width="2"></path>
+  </g>
+
+  <!-- 31: Latissimus Dorsi (Costas - Verde) -->
+  <g id="region-31" class="muscle-region">
+    <path d="M 242 180 L 265 178 L 280 230 L 248 215 Z M 305 178 L 328 180 L 322 215 L 290 230 Z" fill="#22c55e" fill-opacity="0.6" stroke="#22c55e" stroke-width="2"></path>
+  </g>
+
+  <!-- 32: Fascia Toracolumbar / Lombar (Costas) -->
+  <g id="region-32" class="muscle-region">
+    <path d="M 280 162 L 290 162 L 302 248 L 268 248 Z" fill="#e2e8f0" fill-opacity="0.6" stroke="#94a3b8" stroke-width="2"></path>
+  </g>
+
+  <!-- 33: External Oblique (Costas - Roxo/Azul) -->
+  <g id="region-33" class="muscle-region">
+    <path d="M 242 215 L 252 220 L 250 252 L 238 245 Z M 318 220 L 328 215 L 332 245 L 320 252 Z" fill="#a855f7" fill-opacity="0.6" stroke="#a855f7" stroke-width="2"></path>
+  </g>
+
+  <!-- 34: Antebraço (Costas) -->
+  <g id="region-34" class="muscle-region">
+    <path d="M 215 210 L 225 212 L 222 268 L 210 260 Z M 345 212 L 355 210 L 360 260 L 348 268 Z" fill="#ef4444" fill-opacity="0.6" stroke="#ef4444" stroke-width="2"></path>
+  </g>
+
+  <!-- 35: Gluteus Medius (Costas) -->
+  <g id="region-35" class="muscle-region">
+    <path d="M 248 250 L 268 250 L 265 272 L 242 262 Z M 302 250 L 322 250 L 328 262 L 305 272 Z" fill="#ef4444" fill-opacity="0.6" stroke="#ef4444" stroke-width="2"></path>
+  </g>
+
+  <!-- 36: Gluteus Maximus (Costas) -->
+  <g id="region-36" class="muscle-region">
+    <path d="M 245 265 L 282 255 L 282 305 L 248 298 Z M 288 255 L 325 265 L 322 298 L 288 305 Z" fill="#ef4444" fill-opacity="0.6" stroke="#ef4444" stroke-width="2"></path>
+  </g>
+
+  <!-- 37: Biceps Femoris / Posteriores (Costas) -->
+  <g id="region-37" class="muscle-region">
+    <path d="M 248 305 L 272 305 L 268 370 L 248 360 Z M 298 305 L 322 305 L 322 360 L 302 370 Z" fill="#ef4444" fill-opacity="0.6" stroke="#ef4444" stroke-width="2"></path>
+  </g>
+
+  <!-- 38: Semitendinosus (Costas - Verde Interno) -->
+  <g id="region-38" class="muscle-region">
+    <path d="M 272 305 L 282 305 L 278 375 L 268 370 Z" fill="#22c55e" fill-opacity="0.6" stroke="#22c55e" stroke-width="2"></path>
+  </g>
+
+  <!-- 39: Gastrocnemius / Panturrilha Superior (Costas) -->
+  <g id="region-39" class="muscle-region">
+    <path d="M 288 305 L 298 305 L 302 370 L 292 375 Z M 248 385 L 275 385 L 270 450 L 252 445 Z" fill="#ef4444" fill-opacity="0.6" stroke="#ef4444" stroke-width="2"></path>
+  </g>
+
+  <!-- 40: Soleus / Panturrilha Inferior (Costas) -->
+  <g id="region-40" class="muscle-region">
+    <path d="M 295 385 L 322 385 L 318 445 L 300 450 Z" fill="#ef4444" fill-opacity="0.6" stroke="#ef4444" stroke-width="2"></path>
+  </g>
+
+  <!-- 41: Peroneals / Fibulares (Costas Lateral Verde/Azul) -->
+  <g id="region-41" class="muscle-region">
+    <path d="M 242 390 L 248 388 L 248 440 L 240 435 Z M 322 388 L 328 390 L 330 435 L 322 440 Z" fill="#0ea5e9" fill-opacity="0.6" stroke="#0ea5e9" stroke-width="2"></path>
+  </g>
+</svg>
+      </div>
+      
+      <div class="legend-box">
+        <div class="legend-title">Músculos Solicitados no Treino:</div>
+        <div id="activeMusclesBadge" class="active-muscles-list"></div>
+      </div>
+    </div>
+
+    <!-- Montador de Treino -->
+    <div class="builder-card">
+      <div class="tabs-header">
+        <button class="action-btn" onclick="addNewWorkout()">+ Novo Treino</button>
+        <button class="action-btn btn-secondary" onclick="exportJSON()">📋 Gerar / Exportar JSON</button>
+      </div>
+      <div id="workoutContainer" class="workout-list"></div>
+    </div>
+  </div>
+
+  <!-- Modal JSON -->
+  <div id="jsonModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>JSON Exportável para o App</h3>
+        <button class="btn-icon" onclick="closeModal()">✕</button>
+      </div>
+      <textarea id="jsonOutput" readonly></textarea>
+      <div style="display: flex; gap: 10px; margin-top: 12px; justify-content: flex-end;">
+        <button class="action-btn btn-secondary" onclick="closeModal()">Fechar</button>
+        <button class="action-btn" onclick="copyJSON()">Copiar JSON</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const exerciseDatabase = {
+      "Supino": { target: [3], secondary: [4, 5, 28] },
+      "Supino Inclinado": { target: [3], secondary: [4, 28] },
+      "Supino Declinado": { target: [3], secondary: [28] },
+      "Fly": { target: [3], secondary: [4] },
+      "Flexão de Braço": { target: [3], secondary: [4, 28, 7, 10] },
+      "Puxada Aberta": { target: [31, 32, 13], secondary: [15, 16] },
+      "Remada Aberta": { target: [31, 32, 25, 26], secondary: [15] },
+      "Remada Curvada": { target: [31, 32, 25, 26], secondary: [15, 16] },
+      "Pull down": { target: [31, 32], secondary: [28] },
+      "Desenvolv. maquina": { target: [4, 5], secondary: [2, 28] },
+      "Desenvolvimento halter": { target: [4, 5], secondary: [2, 28] },
+      "Elevação Lateral": { target: [5], secondary: [27] },
+      "Elevação Frontal": { target: [4], secondary: [] },
+      "Voador Dorsal": { target: [27], secondary: [25, 26] },
+      "Rosca Direta": { target: [15], secondary: [16] },
+      "Rosca Scott": { target: [15], secondary: [16] },
+      "Rosca Martelo": { target: [16], secondary: [17] },
+      "Tríceps pulley": { target: [28], secondary: [] },
+      "Tríceps Corda": { target: [28], secondary: [] },
+      "Tríceps Francês": { target: [28], secondary: [] },
+      "Tríceps Testa": { target: [28], secondary: [] },
+      "Agachamento Hack": { target: [20, 21], secondary: [36] },
+      "Leg Press": { target: [20, 21], secondary: [36] },
+      "Cadeira Extensora": { target: [20, 21], secondary: [] },
+      "Adutora": { target: [20, 21], secondary: [] },
+      "Abdutora": { target: [35], secondary: [36] },
+      "Flexor": { target: [37, 38], secondary: [] },
+      "Panturrilha": { target: [39, 40], secondary: [] }
+    };
+
+    const muscleNames = {
+      2: "Trapézio Sup.", 3: "Peitoral", 4: "Deltoide Ant.", 5: "Deltoide Lat.", 
+      7: "Abdômen Sup.", 10: "Abdômen Inf.", 15: "Bíceps", 16: "Braquial", 
+      17: "Antebraço", 20: "Quadríceps", 21: "Vasto Lat.", 25: "Trapézio Sup.", 
+      26: "Trapézio Médio", 27: "Deltoide Post.", 28: "Tríceps", 31: "Dorsal Sup.", 
+      32: "Dorsal Inf.", 35: "Glúteo Médio", 36: "Glúteo Máximo", 37: "Posterior Coxa", 
+      38: "Semitendíneo", 39: "Panturrilha Sup.", 40: "Panturrilha Inf."
+    };
+
+    let workoutsData = [
+      {
+        "name": "TREINO 1 — PEITO E TRÍCEPS",
+        "exercises": [
+          { "name": "Supino", "sets": [{ "reps": 12, "weight": 15, "done": false }, { "reps": 12, "weight": 23, "done": false }] },
+          { "name": "Fly", "sets": [{ "reps": 12, "weight": 40, "done": false }] },
+          { "name": "Tríceps pulley", "sets": [{ "reps": 12, "weight": 30, "done": false }] }
+        ]
+      }
+    ];
+
+    function init() { renderWorkouts(); updateMuscleVisualization(); }
+
+    function updateMuscleVisualization() {
+      const targetMuscles = new Set();
+      const secondaryMuscles = new Set();
+
+      workoutsData.forEach(w => {
+        w.exercises.forEach(ex => {
+          const info = exerciseDatabase[ex.name];
+          if (info) {
+            info.target.forEach(id => targetMuscles.add(id));
+            info.secondary.forEach(id => secondaryMuscles.add(id));
+          }
+        });
+      });
+
+      // Atualizar SVG
+      document.querySelectorAll('.muscle-region').forEach(region => {
+        const id = parseInt(region.id.replace('region-', ''));
+        region.classList.remove('active', 'secondary');
+        
+        if (targetMuscles.has(id)) {
+          region.classList.add('active');
+        } else if (secondaryMuscles.has(id)) {
+          region.classList.add('secondary');
+        }
+      });
+
+      // Atualizar Legenda
+      const container = document.getElementById('activeMusclesBadge');
+      container.innerHTML = "";
+      const allActive = [...new Set([...targetMuscles, ...secondaryMuscles])];
+      
+      if (allActive.length === 0) {
+        container.innerHTML = '<span style="color: var(--text-muted); font-size: 0.8rem;">Nenhum músculo atingido.</span>';
+        return;
+      }
+
+      allActive.sort((a, b) => a - b).forEach(id => {
+        const isTarget = targetMuscles.has(id);
+        const badge = document.createElement('span');
+        badge.className = 'muscle-badge';
+        badge.style.background = isTarget ? 'var(--danger)' : 'var(--warning)';
+        badge.innerText = `${id}: ${muscleNames[id] || 'Músculo'}`;
+        container.appendChild(badge);
+      });
+    }
+
+    function renderWorkouts() {
+      const container = document.getElementById('workoutContainer');
+      container.innerHTML = "";
+      workoutsData.forEach((workout, wIndex) => {
+        const workoutDiv = document.createElement('div');
+        workoutDiv.className = 'workout-item';
+        workoutDiv.innerHTML = `
+          <div class="workout-header">
+            <input type="text" value="${workout.name}" onchange="updateWorkoutName(${wIndex}, this.value)">
+            <button class="btn-icon" onclick="removeWorkout(${wIndex})">🗑️</button>
+          </div>
+          <div class="exercise-list">
+            ${workout.exercises.map((ex, eIndex) => renderExerciseHTML(wIndex, eIndex, ex)).join('')}
+          </div>
+          <button class="action-btn btn-secondary" style="margin-top: 12px; width: 100%;" onclick="addExercise(${wIndex})">+ Adicionar Exercício</button>
+        `;
+        container.appendChild(workoutDiv);
+      });
+      updateMuscleVisualization();
+    }
+
+    function renderExerciseHTML(wIndex, eIndex, ex) {
+      const options = Object.keys(exerciseDatabase).map(name => 
+        `<option value="${name}" ${name === ex.name ? 'selected' : ''}>${name}</option>`
+      ).join('');
+
+      return `
+        <div class="exercise-card" onmouseenter="previewMuscle('${ex.name}')" onmouseleave="updateMuscleVisualization()">
+          <div class="exercise-header">
+            <select class="exercise-select" onchange="updateExerciseName(${wIndex}, ${eIndex}, this.value)">
+              ${options}
+            </select>
+            <button class="btn-icon" onclick="removeExercise(${wIndex}, ${eIndex})">✕</button>
+          </div>
+          <table class="sets-table">
+            <thead>
+              <tr><th>Série</th><th>Reps</th><th>Carga (kg)</th><th></th></tr>
+            </thead>
+            <tbody>
+              ${ex.sets.map((set, sIndex) => `
+                <tr>
+                  <td style="text-align: center; color: var(--text-muted);">${sIndex + 1}</td>
+                  <td><input type="number" value="${set.reps}" onchange="updateSet(${wIndex}, ${eIndex}, ${sIndex}, 'reps', this.value)"></td>
+                  <td><input type="number" value="${set.weight}" onchange="updateSet(${wIndex}, ${eIndex}, ${sIndex}, 'weight', this.value)"></td>
+                  <td><button class="btn-icon" onclick="removeSet(${wIndex}, ${eIndex}, ${sIndex})">✕</button></td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+          <button class="btn-add-set" onclick="addSet(${wIndex}, ${eIndex})">+ Adicionar Série</button>
+        </div>
+      `;
+    }
+
+    function updateWorkoutName(wIndex, val) { workoutsData[wIndex].name = val; }
+    function addNewWorkout() { workoutsData.push({ name: `TREINO ${workoutsData.length + 1}`, exercises: [] }); renderWorkouts(); }
+    function removeWorkout(wIndex) { workoutsData.splice(wIndex, 1); renderWorkouts(); }
+    function addExercise(wIndex) { workoutsData[wIndex].exercises.push({ name: Object.keys(exerciseDatabase)[0], sets: [{ reps: 12, weight: 10, done: false }] }); renderWorkouts(); }
+    function updateExerciseName(wIndex, eIndex, val) { workoutsData[wIndex].exercises[eIndex].name = val; renderWorkouts(); }
+    function removeExercise(wIndex, eIndex) { workoutsData[wIndex].exercises.splice(eIndex, 1); renderWorkouts(); }
+    function addSet(wIndex, eIndex) { workoutsData[wIndex].exercises[eIndex].sets.push({ reps: 12, weight: 10, done: false }); renderWorkouts(); }
+    function updateSet(wIndex, eIndex, sIndex, field, val) { workoutsData[wIndex].exercises[eIndex].sets[sIndex][field] = parseInt(val) || 0; }
+    function removeSet(wIndex, eIndex, sIndex) { workoutsData[wIndex].exercises[eIndex].sets.splice(sIndex, 1); renderWorkouts(); }
+
+    function previewMuscle(exName) {
+      const info = exerciseDatabase[exName];
+      if (!info) return;
+      
+      document.querySelectorAll('.muscle-region').forEach(region => {
+        const id = parseInt(region.id.replace('region-', ''));
+        region.classList.remove('active', 'secondary');
+        if (info.target.includes(id)) region.classList.add('active');
+        if (info.secondary.includes(id)) region.classList.add('secondary');
+      });
+    }
+
+    function exportJSON() {
+      document.getElementById('jsonOutput').value = JSON.stringify(workoutsData, null, 2);
+      document.getElementById('jsonModal').style.display = 'flex';
+    }
+    function closeModal() { document.getElementById('jsonModal').style.display = 'none'; }
+    function copyJSON() {
+      const textarea = document.getElementById('jsonOutput');
+      textarea.select();
+      document.execCommand('copy');
+      alert('JSON copiado com sucesso!');
+    }
+
+    window.onload = init;
+  </script>
+</body>
+</html>
