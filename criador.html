@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Mapeador de Regiões SVG</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #1e1e2e;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+      margin: 0;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 15px;
+      align-items: center;
+      background: #2b2b3d;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    label {
+      display: flex;
+      flex-direction: column;
+      font-size: 12px;
+      gap: 5px;
+    }
+
+    input, select, button {
+      padding: 8px 12px;
+      border-radius: 4px;
+      border: 1px solid #444;
+      background: #181825;
+      color: #fff;
+      font-size: 14px;
+    }
+
+    button {
+      background: #3b82f6;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background 0.2s;
+    }
+
+    button:hover {
+      background: #2563eb;
+    }
+
+    button.secondary {
+      background: #ef4444;
+    }
+
+    button.secondary:hover {
+      background: #dc2626;
+    }
+
+    .container {
+      position: relative;
+      width: 400px;
+      height: 580px;
+      border: 2px solid #444;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    }
+
+    .bg-image {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      pointer-events: none;
+    }
+
+    .svg-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      cursor: crosshair;
+    }
+
+    .output-box {
+      margin-top: 20px;
+      width: 100%;
+      max-width: 800px;
+    }
+
+    textarea {
+      width: 100%;
+      height: 120px;
+      background: #181825;
+      color: #a6adc8;
+      border: 1px solid #444;
+      border-radius: 6px;
+      padding: 10px;
+      font-family: monospace;
+      resize: vertical;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Mapeador de Músculos (SVG Path Builder)</h1>
+
+  <div class="toolbar">
+    <label>
+      ID da Região:
+      <input type="number" id="regionId" value="3" style="width: 60px;">
+    </label>
+
+    <label>
+      Cor de Preenchimento:
+      <input type="color" id="regionColor" value="#ef4444">
+    </label>
+
+    <button onclick="undoLastPoint()">Desfazer Ponto</button>
+    <button onclick="closePath()">Fechar Caminho (Z)</button>
+    <button onclick="clearCurrent()">Limpar Atual</button>
+    <button class="secondary" onclick="copyCode()">Copiar &lt;g&gt; Completo</button>
+  </div>
+
+  <div class="container">
+    <!-- Insira aqui o caminho relativo ou URL da sua imagem -->
+    <img src="anatomia.jpg" alt="Anatomia" class="bg-image" id="bgImg">
+    
+    <svg class="svg-canvas" viewBox="0 0 400 580" id="svgWorkspace" onclick="addPoint(event)">
+      <!-- O caminho desenhado aparecerá aqui -->
+      <path id="activePath" d="" fill="#ef4444" fill-opacity="0.6" stroke="#ef4444" stroke-width="2"></path>
+      <g id="dotsGroup"></g> <!-- Pontos visíveis para auxílio de clique -->
+    </svg>
+  </div>
+
+  <div class="output-box">
+    <h3>Código Gerado:</h3>
+    <textarea id="outputCode" readonly placeholder="Clique na imagem para começar a marcar os pontos..."></textarea>
+  </div>
+
+  <script>
+    let points = [];
+    let isClosed = false;
+
+    const svg = document.getElementById('svgWorkspace');
+    const activePath = document.getElementById('activePath');
+    const dotsGroup = document.getElementById('dotsGroup');
+    const outputCode = document.getElementById('outputCode');
+    const regionIdInput = document.getElementById('regionId');
+    const regionColorInput = document.getElementById('regionColor');
+
+    // Atualiza cores em tempo real ao mudar a cor no input
+    regionColorInput.addEventListener('input', (e) => {
+      const color = e.target.value;
+      activePath.setAttribute('fill', color);
+      activePath.setAttribute('stroke', color);
+      updateOutput();
+    });
+
+    regionIdInput.addEventListener('input', updateOutput);
+
+    function addPoint(event) {
+      if (isClosed) return; // Se já fechou, precisa limpar para desenhar outro
+
+      const rect = svg.getBoundingClientRect();
+      
+      // Converte coordenadas da tela para as coordenadas do viewBox (0 0 400 580)
+      const x = Math.round(((event.clientX - rect.left) / rect.width) * 400);
+      const y = Math.round(((event.clientY - rect.top) / rect.height) * 580);
+
+      points.push({ x, y });
+      renderPath();
+    }
+
+    function renderPath() {
+      if (points.length === 0) {
+        activePath.setAttribute('d', '');
+        dotsGroup.innerHTML = '';
+        outputCode.value = '';
+        return;
+      }
+
+      // Constrói a string d (M x y L x y ...)
+      let d = `M ${points[0].x} ${points[0].y}`;
+      for (let i = 1; i < points.length; i++) {
+        d += ` L ${points[i].x} ${points[i].y}`;
+      }
+
+      if (isClosed) {
+        d += ' Z';
+      }
+
+      activePath.setAttribute('d', d);
+
+      // Renderiza os círculos guia para visualização
+      dotsGroup.innerHTML = points.map(p => 
+        `<circle cx="${p.x}" cy="${p.y}" r="3" fill="#ffffff" stroke="#000" stroke-width="1"/>`
+      ).join('');
+
+      updateOutput();
+    }
+
+    function closePath() {
+      if (points.length > 2) {
+        isClosed = true;
+        renderPath();
+      }
+    }
+
+    function undoLastPoint() {
+      isClosed = false;
+      points.pop();
+      renderPath();
+    }
+
+    function clearCurrent() {
+      points = [];
+      isClosed = false;
+      renderPath();
+    }
+
+    function updateOutput() {
+      const id = regionIdInput.value;
+      const color = regionColorInput.value;
+      const d = activePath.getAttribute('d');
+
+      if (!d) {
+        outputCode.value = '';
+        return;
+      }
+
+      const fullGroupCode = 
+`<g id="region-${id}" class="muscle-region">
+  <path d="${d}" fill="${color}" fill-opacity="0.6" stroke="${color}" stroke-width="2"></path>
+</g>`;
+
+      outputCode.value = fullGroupCode;
+    }
+
+    function copyCode() {
+      if (!outputCode.value) return;
+      outputCode.select();
+      navigator.clipboard.writeText(outputCode.value);
+      alert('Código copiado para a área de transferência!');
+    }
+  </script>
+</body>
+</html>
